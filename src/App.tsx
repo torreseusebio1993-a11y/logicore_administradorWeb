@@ -7,6 +7,7 @@ import BatchesPage from './pages/BatchesPage'
 import DashboardPage from './pages/DashboardPage'
 import LoginPage from './pages/LoginPage'
 import MapPage from './pages/MapPage'
+import RoutePage from './pages/RoutePage'
 import WhatsAppPage from './pages/WhatsAppPage'
 
 function Protected () {
@@ -25,6 +26,7 @@ export default function App () {
         <Route path='cargas' element={<BatchesPage />} />
         <Route path='cargas/:id' element={<BatchDetailPage />} />
         <Route path='mapa' element={<MapPage />} />
+        <Route path='ruta' element={<RoutePage />} />
         <Route path='whatsapp' element={<WhatsAppPage />} />
       </Route>
       <Route path='*' element={<Navigate to='/' replace />} />

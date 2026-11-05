@@ -1,7 +1,7 @@
 // Cliente de la API. El panel se autentica con la sesión del usuario
 // (Authorization: Bearer); NUNCA con la API key de la app móvil.
 import type {
-  Batch, Package, PackageEdit, StatsSummary, User, WaAccount, WaMessage, WaTemplate,
+  Batch, Package, PackageEdit, StatsSummary, TodayRoute, User, WaAccount, WaMessage, WaTemplate,
 } from './types'
 
 const BASE = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/$/, '')
@@ -82,6 +82,14 @@ export const api = {
     if (batchId) q.set('batch_id', String(batchId))
     if (includeDelivered) q.set('include_delivered', 'true')
     return get<Package[]>(`/packages/map?${q}`)
+  },
+
+  // Ruta del día (por calles con OSRM; si no, en línea recta)
+  todayRoute: (opts: { lat?: number, lng?: number, batchId?: number }) => {
+    const q = new URLSearchParams({ with_geometry: 'true' })
+    if (opts.lat != null && opts.lng != null) { q.set('lat', String(opts.lat)); q.set('lng', String(opts.lng)) }
+    if (opts.batchId) q.set('batch_id', String(opts.batchId))
+    return get<TodayRoute>(`/routes/today?${q}`)
   },
 
   // WhatsApp

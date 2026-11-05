@@ -101,3 +101,22 @@ export interface StatsSummary {
   total_pending: number
   overall_progress: number
 }
+
+export interface RouteStop {
+  order: number
+  distance_km: number | null
+  duration_min: number | null
+  package: Package
+}
+
+export interface TodayRoute {
+  origin: [number, number] | null
+  next: Package | null
+  stops: RouteStop[]
+  without_location: Package[]
+  total_km: number
+  total_min: number | null
+  distance_source: 'calles' | 'linea_recta'
+  pending: number
+  geometry: [number, number][] | null
+}
