@@ -112,37 +112,60 @@ function AccountModal ({ account, onClose, onCreated }: {
 // ── Mensaje (plantilla) ─────────────────────────────────
 
 function TemplateModal ({ onClose }: { onClose: () => void }) {
+  const qc = useQueryClient()
   const templates = useQuery({ queryKey: ['wa-templates'], queryFn: api.waTemplates })
-  const tpl = templates.data?.find(t => t.key === 'request_location')
-  const [body, setBody] = useState<string | null>(null)
+  const [key, setKey] = useState('request_location')
+  const [edits, setEdits] = useState<Record<string, string>>({})
+  const tpl = templates.data?.find(t => t.key === key)
   const save = useMutation({
-    mutationFn: () => api.waUpdateTemplate('request_location', body ?? tpl!.body),
-    onSuccess: onClose,
+    mutationFn: () => Promise.all(
+      Object.entries(edits).map(([k, body]) => api.waUpdateTemplate(k, body))),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['wa-templates'] })
+      onClose()
+    },
   })
-  const text = body ?? tpl?.body ?? ''
+  const text = edits[key] ?? tpl?.body ?? ''
   const preview = text
     .replaceAll('{nombre}', 'Leticia Oses')
     .replaceAll('{tracking}', 'PRSPTY07262635987')
     .replaceAll('{tracking_corto}', '35987')
 
   return (
-    <Modal title='Mensaje para pedir la ubicación' onClose={onClose} wide>
-      {!tpl ? <Spinner /> : (
-        <div className='grid gap-4 md:grid-cols-2'>
-          <div className='space-y-2'>
-            <textarea className={input} rows={8} value={text} onChange={e => setBody(e.target.value)} />
-            <p className='text-xs text-slate-500'>Variables: <code>{'{nombre}'}</code> <code>{'{tracking}'}</code> <code>{'{tracking_corto}'}</code></p>
+    <Modal title='Mensajes de WhatsApp' onClose={onClose} wide>
+      {!templates.data ? <Spinner /> : (
+        <div className='space-y-4'>
+          <div className='flex gap-2'>
+            {templates.data.map(t => (
+              <button
+                key={t.key}
+                onClick={() => setKey(t.key)}
+                className={`rounded-full border px-3 py-1 text-sm ${key === t.key ? 'border-brand bg-brand/10 font-medium text-brand' : 'border-slate-300'}`}
+              >
+                {t.title}{edits[t.key] !== undefined ? ' •' : ''}
+              </button>
+            ))}
           </div>
-          <div>
-            <div className='mb-1 text-xs font-semibold uppercase text-slate-500'>Vista previa</div>
-            <div className='whitespace-pre-wrap rounded-xl bg-green-100 p-3 text-sm'>{preview}</div>
-          </div>
-          <div className='md:col-span-2'>
-            <ErrorBox error={save.error} />
-            <div className='flex justify-end gap-2'>
-              <button className={btn.ghost} onClick={onClose}>Cancelar</button>
-              <button className={btn.primary} disabled={save.isPending || text.trim().length < 10} onClick={() => save.mutate()}>Guardar</button>
+          <div className='grid gap-4 md:grid-cols-2'>
+            <div className='space-y-2'>
+              <textarea className={input} rows={8} value={text} onChange={e => setEdits(v => ({ ...v, [key]: e.target.value }))} />
+              <p className='text-xs text-slate-500'>Variables: <code>{'{nombre}'}</code> <code>{'{tracking}'}</code> <code>{'{tracking_corto}'}</code></p>
             </div>
+            <div>
+              <div className='mb-1 text-xs font-semibold uppercase text-slate-500'>Vista previa</div>
+              <div className='whitespace-pre-wrap rounded-xl bg-green-100 p-3 text-sm'>{preview}</div>
+            </div>
+          </div>
+          <ErrorBox error={save.error} />
+          <div className='flex justify-end gap-2'>
+            <button className={btn.ghost} onClick={onClose}>Cancelar</button>
+            <button
+              className={btn.primary}
+              disabled={save.isPending || Object.keys(edits).length === 0 || Object.values(edits).some(b => b.trim().length < 10)}
+              onClick={() => save.mutate()}
+            >
+              Guardar
+            </button>
           </div>
         </div>
       )}
@@ -178,7 +201,7 @@ export default function WhatsAppPage () {
         title='WhatsApp'
         subtitle='Cuentas con las que se escribe a los clientes (puedes tener las que quieras)'
         actions={<>
-          <button className={btn.ghost} onClick={() => setTemplate(true)}>✏️ Editar mensaje</button>
+          <button className={btn.ghost} onClick={() => setTemplate(true)}>✏️ Editar mensajes</button>
           <button className={btn.wa} onClick={() => setCreating(true)}>+ Agregar cuenta</button>
         </>}
       />
