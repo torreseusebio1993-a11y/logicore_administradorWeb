@@ -1,7 +1,7 @@
 // Cliente de la API. El panel se autentica con la sesión del usuario
 // (Authorization: Bearer); NUNCA con la API key de la app móvil.
 import type {
-  Batch, CustomerDetail, CustomerSummary, Package, PackageEdit, StatsSummary, TodayRoute, User,
+  Batch, CustomerDetail, CustomerSummary, Package, PackageEdit, StatsSummary, TodayRoute, User, UserSettings,
   WaAccount, WaMessage, WaTemplate,
 } from './types'
 
@@ -69,6 +69,8 @@ export const api = {
     post<{ token: string, expires_at: string, user: User }>('/auth/login', { username, password }),
   me: () => get<User>('/auth/me'),
   logout: () => post<void>('/auth/logout'),
+  mySettings: () => get<UserSettings>('/auth/me/settings'),
+  saveMySettings: (s: UserSettings) => put<UserSettings>('/auth/me/settings', s),
 
   // Cargas y paquetes
   stats: () => get<StatsSummary>('/batches/stats/summary'),

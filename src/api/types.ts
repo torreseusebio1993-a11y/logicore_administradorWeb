@@ -69,6 +69,9 @@ export interface WaAccount {
   daily_limit: number
   min_interval_s: number
   sent_today: number
+  send_start_hour: number
+  send_end_hour: number
+  user_id: number | null
   last_sent_at: string | null
   created_at: string
 }
@@ -147,4 +150,11 @@ export interface CustomerDetail extends CustomerSummary {
   notes: string | null
   locations: CustomerLocation[]
   history: Package[]
+}
+
+export interface UserSettings {
+  wa_start_hour: number
+  wa_end_hour: number
+  wa_min_interval_s: number
+  wa_daily_limit: number
 }

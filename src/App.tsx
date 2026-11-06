@@ -9,6 +9,7 @@ import DashboardPage from './pages/DashboardPage'
 import LoginPage from './pages/LoginPage'
 import MapPage from './pages/MapPage'
 import RoutePage from './pages/RoutePage'
+import SettingsPage from './pages/SettingsPage'
 import WhatsAppPage from './pages/WhatsAppPage'
 
 function Protected () {
@@ -31,6 +32,7 @@ export default function App () {
         <Route path='mapa' element={<MapPage />} />
         <Route path='ruta' element={<RoutePage />} />
         <Route path='whatsapp' element={<WhatsAppPage />} />
+        <Route path='ajustes' element={<SettingsPage />} />
       </Route>
       <Route path='*' element={<Navigate to='/' replace />} />
     </Routes>

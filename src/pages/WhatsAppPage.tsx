@@ -70,13 +70,11 @@ function AccountModal ({ account, onClose, onCreated }: {
   const qc = useQueryClient()
   const [name, setName] = useState(account?.name ?? '')
   const [phone, setPhone] = useState(account ? localPhone(account.phone) : '')
-  const [limit, setLimit] = useState(String(account?.daily_limit ?? 30))
-  const [interval, setInterval] = useState(String(account?.min_interval_s ?? 60))
 
   const save = useMutation({
     mutationFn: () => account
-      ? api.waUpdateAccount(account.id, { name, daily_limit: Number(limit), min_interval_s: Number(interval) })
-      : api.waCreateAccount({ name, phone, daily_limit: Number(limit) }),
+      ? api.waUpdateAccount(account.id, { name })
+      : api.waCreateAccount({ name, phone, daily_limit: 30 }),
     onSuccess: a => {
       qc.invalidateQueries({ queryKey: ['wa-accounts'] })
       onClose()
@@ -91,14 +89,9 @@ function AccountModal ({ account, onClose, onCreated }: {
         <Field label='Celular' hint={account ? 'El número no se puede cambiar' : 'Celular de Panamá, ej. 6123-4567'}>
           <input className={input} value={phone} onChange={e => setPhone(e.target.value)} disabled={!!account} required />
         </Field>
-        <Field label='Mensajes por día (máximo)' hint='En números nuevos empieza bajo (20–30) y sube de a poco'>
-          <input className={input} type='number' min={1} max={1000} value={limit} onChange={e => setLimit(e.target.value)} required />
-        </Field>
-        {account && (
-          <Field label='Pausa mínima entre mensajes (segundos)'>
-            <input className={input} type='number' min={10} max={3600} value={interval} onChange={e => setInterval(e.target.value)} required />
-          </Field>
-        )}
+        <p className='text-xs text-slate-500'>
+          El horario, la pausa y el límite diario se configuran en <b>Ajustes</b> y aplican a todas tus cuentas.
+        </p>
         <ErrorBox error={save.error} />
         <div className='flex justify-end gap-2 pt-2'>
           <button type='button' className={btn.ghost} onClick={onClose}>Cancelar</button>
@@ -239,7 +232,9 @@ export default function WhatsAppPage () {
                     <div className='h-2 rounded bg-slate-100'>
                       <div className={`h-2 rounded ${usage >= 1 ? 'bg-red-500' : 'bg-wa'}`} style={{ width: `${usage * 100}%` }} />
                     </div>
-                    <div className='mt-1 text-xs text-slate-500'>{a.sent_today}/{a.daily_limit} mensajes hoy · pausa {a.min_interval_s}s</div>
+                    <div className='mt-1 text-xs text-slate-500'>
+                      {a.sent_today}/{a.daily_limit} mensajes hoy · pausa {a.min_interval_s}s · {a.send_start_hour}:00–{a.send_end_hour}:00
+                    </div>
                   </div>
                   <div className='flex flex-wrap gap-3 border-t border-slate-100 pt-3'>
                     {needsLink && <button className={btn.wa} onClick={() => setLinking(a)}>Vincular con QR</button>}

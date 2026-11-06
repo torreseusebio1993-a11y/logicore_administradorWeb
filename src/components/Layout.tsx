@@ -8,6 +8,7 @@ const nav = [
   { to: '/mapa', label: 'Mapa de clientes', icon: '🗺️' },
   { to: '/ruta', label: 'Ruta del día', icon: '🧭' },
   { to: '/whatsapp', label: 'WhatsApp', icon: '💬' },
+  { to: '/ajustes', label: 'Ajustes', icon: '⚙️' },
 ]
 
 export default function Layout () {
