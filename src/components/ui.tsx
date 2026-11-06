@@ -82,6 +82,7 @@ export const locationStatus: Record<LocationStatus, [string, string]> = {
   unknown: ['Sin ubicación', 'bg-slate-100 text-slate-600'],
   requested: ['Pedida', 'bg-amber-100 text-amber-800'],
   received: ['📍 Recibida', 'bg-green-100 text-green-800'],
+  historical: ['📍 Anterior', 'bg-teal-100 text-teal-800'],
 }
 
 export function accountStatus (a: WaAccount): [string, string] {

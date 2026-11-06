@@ -25,11 +25,12 @@ export interface Batch {
 
 export type PackageStatus = 'pending' | 'delivered' | 'failed' | 'returned'
 export type ContactStatus = 'not_contacted' | 'queued' | 'sent' | 'responded' | 'failed' | 'no_whatsapp'
-export type LocationStatus = 'unknown' | 'requested' | 'received'
+export type LocationStatus = 'unknown' | 'requested' | 'received' | 'historical'
 
 export interface Package {
   id: number
   batch_id: number
+  customer_id: number | null
   tracking_number: string | null
   tracking_source: 'qr' | 'text' | 'manual' | null
   customer_name: string | null
@@ -119,4 +120,31 @@ export interface TodayRoute {
   distance_source: 'calles' | 'linea_recta'
   pending: number
   geometry: [number, number][] | null
+}
+
+export interface CustomerSummary {
+  id: number
+  name: string | null
+  phones: string[]
+  packages: number
+  delivered: number
+  has_location: boolean
+}
+
+export interface CustomerLocation {
+  id: number
+  latitude: number
+  longitude: number
+  source: 'whatsapp' | 'delivery' | 'manual'
+  address: string | null
+  is_primary: boolean
+  times_delivered: number
+  captured_at: string
+  last_confirmed_at: string | null
+}
+
+export interface CustomerDetail extends CustomerSummary {
+  notes: string | null
+  locations: CustomerLocation[]
+  history: Package[]
 }

@@ -1,7 +1,8 @@
 // Cliente de la API. El panel se autentica con la sesión del usuario
 // (Authorization: Bearer); NUNCA con la API key de la app móvil.
 import type {
-  Batch, Package, PackageEdit, StatsSummary, TodayRoute, User, WaAccount, WaMessage, WaTemplate,
+  Batch, CustomerDetail, CustomerSummary, Package, PackageEdit, StatsSummary, TodayRoute, User,
+  WaAccount, WaMessage, WaTemplate,
 } from './types'
 
 const BASE = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/$/, '')
@@ -83,6 +84,16 @@ export const api = {
     if (includeDelivered) q.set('include_delivered', 'true')
     return get<Package[]>(`/packages/map?${q}`)
   },
+
+  // Clientes
+  customers: (search = '') => get<CustomerSummary[]>(`/customers/${search ? `?search=${encodeURIComponent(search)}` : ''}`),
+  customer: (id: number) => get<CustomerDetail>(`/customers/${id}`),
+  updateCustomer: (id: number, data: { name?: string | null, notes?: string | null }) =>
+    patch<CustomerDetail>(`/customers/${id}`, data),
+  addCustomerPhone: (id: number, phone: string) => post<CustomerDetail>(`/customers/${id}/phones`, { phone }),
+  setPrimaryLocation: (id: number, locId: number) =>
+    post<CustomerDetail>(`/customers/${id}/locations/${locId}/primary`),
+  deleteLocation: (id: number, locId: number) => del(`/customers/${id}/locations/${locId}`),
 
   // Ruta del día (por calles con OSRM; si no, en línea recta)
   todayRoute: (opts: { lat?: number, lng?: number, batchId?: number }) => {

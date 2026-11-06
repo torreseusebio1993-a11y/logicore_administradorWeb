@@ -4,6 +4,7 @@ import Layout from './components/Layout'
 import { Spinner } from './components/ui'
 import BatchDetailPage from './pages/BatchDetailPage'
 import BatchesPage from './pages/BatchesPage'
+import CustomersPage from './pages/CustomersPage'
 import DashboardPage from './pages/DashboardPage'
 import LoginPage from './pages/LoginPage'
 import MapPage from './pages/MapPage'
@@ -25,6 +26,8 @@ export default function App () {
         <Route index element={<DashboardPage />} />
         <Route path='cargas' element={<BatchesPage />} />
         <Route path='cargas/:id' element={<BatchDetailPage />} />
+        <Route path='clientes' element={<CustomersPage />} />
+        <Route path='clientes/:id' element={<CustomersPage />} />
         <Route path='mapa' element={<MapPage />} />
         <Route path='ruta' element={<RoutePage />} />
         <Route path='whatsapp' element={<WhatsAppPage />} />

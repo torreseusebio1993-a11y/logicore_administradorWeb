@@ -16,7 +16,7 @@ const FILTERS: [Filter, string, (p: Package) => boolean][] = [
   ['all', 'Todos', () => true],
   ['pending', 'Por entregar', p => p.status === 'pending' || p.status === 'failed'],
   ['delivered', 'Entregados', p => p.status === 'delivered'],
-  ['no_location', 'Sin ubicación', p => p.location_status !== 'received' && p.status !== 'delivered'],
+  ['no_location', 'Sin ubicación', p => p.dest_latitude == null && p.status !== 'delivered'],
   ['check', 'Verificar tracking', p => p.tracking_source === 'text'],
 ]
 
