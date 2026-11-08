@@ -53,6 +53,9 @@ export interface Package {
   dest_longitude: number | null
   location_received_at: string | null
   created_at: string
+  // Calculados por el backend
+  sector: string | null
+  out_of_route: boolean
 }
 
 export type PackageEdit = Partial<Pick<Package,
@@ -69,6 +72,7 @@ export interface WaAccount {
   daily_limit: number
   min_interval_s: number
   sent_today: number
+  clients_today: number      // clientes distintos hoy: cuenta para el límite
   send_start_hour: number
   send_end_hour: number
   user_id: number | null
@@ -123,6 +127,9 @@ export interface TodayRoute {
   distance_source: 'calles' | 'linea_recta'
   pending: number
   geometry: [number, number][] | null
+  sectors: string[]          // en el orden en que se recorren
+  out_of_route: number
+  outlier_km: number
 }
 
 export interface CustomerSummary {
@@ -156,5 +163,10 @@ export interface UserSettings {
   wa_start_hour: number
   wa_end_hour: number
   wa_min_interval_s: number
-  wa_daily_limit: number
+  wa_daily_limit: number     // clientes distintos por día
+  wa_retry_hours: number
+  wa_max_retries: number
+  route_outlier_km: number
 }
+
+export type BatchEdit = Partial<Pick<Batch, 'name' | 'batch_date' | 'expected_packages' | 'notes'>>

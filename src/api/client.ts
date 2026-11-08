@@ -1,7 +1,7 @@
 // Cliente de la API. El panel se autentica con la sesión del usuario
 // (Authorization: Bearer); NUNCA con la API key de la app móvil.
 import type {
-  Batch, CustomerDetail, CustomerSummary, Package, PackageEdit, StatsSummary, TodayRoute, User, UserSettings,
+  Batch, BatchEdit, CustomerDetail, CustomerSummary, Package, PackageEdit, StatsSummary, TodayRoute, User, UserSettings,
   WaAccount, WaMessage, WaTemplate,
 } from './types'
 
@@ -77,6 +77,10 @@ export const api = {
   batches: () => get<Batch[]>('/batches/'),
   batch: (id: number) => get<Batch>(`/batches/${id}`),
   closeBatch: (id: number) => post<Batch>(`/batches/${id}/close`),
+  updateBatch: (id: number, data: BatchEdit) => patch<Batch>(`/batches/${id}`, data),
+  endOfDay: (batchId?: number) =>
+    post<{ marked: number, skipped: number }>('/packages/incident/end-of-day',
+      batchId ? { batch_id: batchId } : {}),
   packages: (batchId: number) => get<Package[]>(`/packages/batch/${batchId}`),
   updatePackage: (id: number, data: PackageEdit) => patch<Package>(`/packages/${id}`, data),
   deletePackage: (id: number) => del(`/packages/${id}`),

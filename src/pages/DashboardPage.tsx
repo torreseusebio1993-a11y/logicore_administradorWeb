@@ -77,7 +77,7 @@ export default function DashboardPage () {
                   <li key={a.id} className='flex items-center justify-between py-2 text-sm'>
                     <span>{a.name}</span>
                     <span className='flex items-center gap-3'>
-                      <span className='text-slate-500'>{a.sent_today}/{a.daily_limit} hoy</span>
+                      <span className='text-slate-500'>{a.clients_today}/{a.daily_limit} clientes hoy</span>
                       <Badge color={color}>{label}</Badge>
                     </span>
                   </li>

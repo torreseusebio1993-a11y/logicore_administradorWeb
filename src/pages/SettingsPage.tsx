@@ -57,9 +57,36 @@ export default function SettingsPage () {
               <input className={input} type='number' min={10} max={3600} value={form.wa_min_interval_s}
                 onChange={e => set('wa_min_interval_s', Number(e.target.value))} required />
             </Field>
-            <Field label='Mensajes por día, por cuenta' hint='En números nuevos empieza bajo (20–30) y sube de a poco'>
+            <Field label='Clientes por día, por cuenta'
+              hint='Cuenta clientes distintos, no mensajes: escribirle varias veces al mismo cliente gasta 1. En números nuevos empieza bajo (20–30)'>
               <input className={input} type='number' min={1} max={1000} value={form.wa_daily_limit}
                 onChange={e => set('wa_daily_limit', Number(e.target.value))} required />
+            </Field>
+            <div className='pt-2'>
+              <h2 className='font-semibold'>Reintento para pedir ubicación</h2>
+              <p className='text-sm text-slate-500'>
+                Si el cliente no responde, se le vuelve a pedir la ubicación con la plantilla
+                “Recordatorio”. Si respondió con un texto no se reintenta: lo revisas tú.
+              </p>
+            </div>
+            <div className='grid grid-cols-2 gap-4'>
+              <Field label='Volver a pedir a las (horas)'>
+                <input className={input} type='number' min={1} max={168} value={form.wa_retry_hours}
+                  onChange={e => set('wa_retry_hours', Number(e.target.value))} required />
+              </Field>
+              <Field label='Reintentos'>
+                <select className={input} value={form.wa_max_retries} onChange={e => set('wa_max_retries', Number(e.target.value))}>
+                  {[0, 1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n === 0 ? 'Ninguno' : `Máximo ${n}`}</option>)}
+                </select>
+              </Field>
+            </div>
+            <div className='pt-2'>
+              <h2 className='font-semibold'>Ruta</h2>
+            </div>
+            <Field label='Marcar “fuera de ruta” a más de (km)'
+              hint='Clientes lejos de la mayoría de entregas: se marcan y van al final de la ruta'>
+              <input className={input} type='number' min={0.5} max={50} step={0.5} value={form.route_outlier_km}
+                onChange={e => set('route_outlier_km', Number(e.target.value))} required />
             </Field>
             {form.wa_end_hour <= form.wa_start_hour && (
               <p className='text-sm text-red-600'>La hora de fin debe ser después de la de inicio.</p>

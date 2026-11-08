@@ -216,7 +216,7 @@ export default function WhatsAppPage () {
           <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
             {(accounts.data ?? []).map(a => {
               const [label, color] = accountStatus(a)
-              const usage = Math.min(a.sent_today / a.daily_limit, 1)
+              const usage = Math.min(a.clients_today / a.daily_limit, 1)   // límite = clientes distintos
               const needsLink = a.enabled && ['pending', 'logged_out', 'disconnected'].includes(a.status)
               return (
                 <div key={a.id} className='space-y-3 rounded-2xl border border-slate-200 bg-white p-5'>
@@ -233,7 +233,7 @@ export default function WhatsAppPage () {
                       <div className={`h-2 rounded ${usage >= 1 ? 'bg-red-500' : 'bg-wa'}`} style={{ width: `${usage * 100}%` }} />
                     </div>
                     <div className='mt-1 text-xs text-slate-500'>
-                      {a.sent_today}/{a.daily_limit} mensajes hoy · pausa {a.min_interval_s}s · {a.send_start_hour}:00–{a.send_end_hour}:00
+                      {a.clients_today}/{a.daily_limit} clientes hoy ({a.sent_today} mensajes) · pausa {a.min_interval_s}s · {a.send_start_hour}:00–{a.send_end_hour}:00
                     </div>
                   </div>
                   <div className='flex flex-wrap gap-3 border-t border-slate-100 pt-3'>

@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import type { Package } from '../api/types'
 import { PageHeader } from '../components/Layout'
-import { ConversationModal, EditPackageModal } from '../components/PackageModals'
+import { ConversationModal, EditBatchModal, EditPackageModal } from '../components/PackageModals'
 import {
   Badge, btn, contactStatus, ErrorBox, formatDate, input, localPhone, locationStatus,
   mapsUrl, packageStatus, Spinner,
@@ -31,6 +31,7 @@ export default function BatchDetailPage () {
   const [editing, setEditing] = useState<Package | null>(null)
   const [chat, setChat] = useState<Package | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [editBatch, setEditBatch] = useState(false)
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ['packages', id] })
@@ -56,9 +57,18 @@ export default function BatchDetailPage () {
   const rows = useMemo(() => {
     const test = FILTERS.find(f => f[0] === filter)![2]
     const q = search.trim().toLowerCase()
-    return (packages.data ?? []).filter(p => test(p) && (!q || [
-      p.customer_name, p.tracking_number, p.customer_phone, p.address, p.corregimiento,
+    const list = (packages.data ?? []).filter(p => test(p) && (!q || [
+      p.customer_name, p.tracking_number, p.customer_phone, p.address, p.corregimiento, p.sector,
     ].some(v => v?.toLowerCase().includes(q))))
+    // Agrupado por sector (alfabético, "Sin sector" al final)
+    const key = (p: Package) => p.sector ?? 'Sin sector'
+    return list.sort((a, b) => {
+      const [ka, kb] = [key(a), key(b)]
+      if (ka === kb) return 0
+      if (ka === 'Sin sector') return 1
+      if (kb === 'Sin sector') return -1
+      return ka.localeCompare(kb, 'es')
+    })
   }, [packages.data, filter, search])
 
   const b = batch.data
@@ -71,6 +81,7 @@ export default function BatchDetailPage () {
         subtitle={b ? `${formatDate(b.batch_date)} · ${b.code} · ${b.total_packages}/${b.expected_packages} cargados · ${b.delivered_packages} entregados` : undefined}
         actions={<>
           <Link to='/cargas' className={btn.ghost}>← Cargas</Link>
+          {b && <button className={btn.ghost} onClick={() => setEditBatch(true)}>✏️ Editar carga</button>}
           <Link to={`/mapa?carga=${id}`} className={btn.ghost}>🗺️ Ver en mapa</Link>
           <button
             className={btn.wa}
@@ -117,14 +128,25 @@ export default function BatchDetailPage () {
                 </tr>
               </thead>
               <tbody className='divide-y divide-slate-100'>
-                {rows.map(p => {
+                {rows.map((p, i) => {
                   const [sLabel, sColor] = packageStatus[p.status]
                   const [cLabel, cColor] = contactStatus[p.contact_status]
                   const [lLabel, lColor] = locationStatus[p.location_status]
                   const canAsk = !!p.customer_phone && p.location_status !== 'received' &&
                     !['queued', 'no_whatsapp'].includes(p.contact_status)
+                  const sector = p.sector ?? 'Sin sector'
+                  const newSector = i === 0 || sector !== (rows[i - 1].sector ?? 'Sin sector')
+                  const inSector = newSector ? rows.filter(r => (r.sector ?? 'Sin sector') === sector).length : 0
                   return (
-                    <tr key={p.id} className='align-top hover:bg-slate-50'>
+                    <Fragment key={p.id}>
+                    {newSector && (
+                      <tr className='bg-slate-100'>
+                        <td colSpan={7} className='px-4 py-2 text-sm font-bold text-slate-800'>
+                          📍 {sector} <span className='font-normal text-slate-500'>· {inSector}</span>
+                        </td>
+                      </tr>
+                    )}
+                    <tr className='align-top hover:bg-slate-50'>
                       <td className='px-4 py-3'>
                         <div className='font-medium'>{p.customer_name ?? '—'}</div>
                         <div className='text-xs text-slate-500'>{localPhone(p.customer_phone)}</div>
@@ -135,8 +157,8 @@ export default function BatchDetailPage () {
                         {p.tracking_source === 'text' && <div><Badge color='bg-red-100 text-red-700'>Verificar</Badge></div>}
                       </td>
                       <td className='px-4 py-3 text-xs'>
-                        <div>{p.distrito ?? '—'}</div>
-                        <div className='font-medium'>{p.corregimiento ?? ''}</div>
+                        <div className='font-semibold'>{p.sector ?? '—'}</div>
+                        <div className='text-slate-500'>{[p.distrito, p.corregimiento].filter(Boolean).join(' · ')}</div>
                       </td>
                       <td className='px-4 py-3'><Badge color={sColor}>{sLabel}</Badge></td>
                       <td className='px-4 py-3'><Badge color={cColor}>{cLabel}</Badge></td>
@@ -161,6 +183,7 @@ export default function BatchDetailPage () {
                         </div>
                       </td>
                     </tr>
+                    </Fragment>
                   )
                 })}
               </tbody>
@@ -171,6 +194,7 @@ export default function BatchDetailPage () {
       </div>
       {editing && <EditPackageModal pkg={editing} onClose={() => setEditing(null)} />}
       {chat && <ConversationModal pkg={chat} onClose={() => setChat(null)} />}
+      {editBatch && b && <EditBatchModal batch={b} onClose={() => setEditBatch(false)} />}
     </>
   )
 }

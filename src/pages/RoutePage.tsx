@@ -1,12 +1,45 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import L from 'leaflet'
 import { useEffect, useMemo, useState } from 'react'
 import { MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from 'react-leaflet'
 import { api } from '../api/client'
+import type { Package, RouteStop } from '../api/types'
 import { PageHeader } from '../components/Layout'
 import { Badge, btn, ErrorBox, input, localPhone, mapsUrl, Spinner } from '../components/ui'
 
 const DEFAULT_CENTER: [number, number] = [8.88, -79.78]
+const OUT_COLOR = '#ea580c'
+
+function OutBadge () {
+  return <Badge color='bg-orange-100 text-orange-700'>Fuera de ruta</Badge>
+}
+
+function StopItem ({ s }: { s: RouteStop }) {
+  return (
+    <li className='flex gap-3 rounded-lg border border-slate-100 p-2 text-sm'>
+      <span className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white'
+        style={{ background: s.package.out_of_route ? OUT_COLOR : '#2563eb' }}>{s.order}</span>
+      <div className='min-w-0'>
+        <div className='truncate font-medium'>{s.package.customer_name ?? s.package.tracking_number}</div>
+        <div className='text-xs text-slate-500'>
+          {[s.package.address, s.distance_km != null && `${s.distance_km} km`, s.duration_min != null && `${Math.round(s.duration_min)} min`].filter(Boolean).join(' · ')}
+        </div>
+      </div>
+    </li>
+  )
+}
+
+function NoLocItem ({ p }: { p: Package }) {
+  return (
+    <li className='flex gap-3 rounded-lg border border-dashed border-slate-200 p-2 text-sm text-slate-600'>
+      <span className='flex h-6 w-6 shrink-0 items-center justify-center text-xs'>📍</span>
+      <div className='min-w-0'>
+        <div className='truncate'>{p.customer_name ?? p.tracking_number}</div>
+        <div className='text-xs text-slate-400'>sin ubicación{p.address ? ` · ${p.address}` : ''}</div>
+      </div>
+    </li>
+  )
+}
 
 /** Marcador con el número de parada (sin imágenes: evita problemas de rutas en Vite). */
 const numberIcon = (n: number | string, color = '#2563eb') => L.divIcon({
@@ -32,6 +65,8 @@ export default function RoutePage () {
   const [batchId, setBatchId] = useState<number | undefined>()
   const [origin, setOrigin] = useState<{ lat: number, lng: number } | null>(null)
   const [geoError, setGeoError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
+  const qc = useQueryClient()
 
   const route = useQuery({
     queryKey: ['route', batchId, origin?.lat, origin?.lng],
@@ -49,6 +84,15 @@ export default function RoutePage () {
   }
 
   const r = route.data
+
+  // Terminar el día: lo pendiente pasa a mañana y se avisa a cada cliente
+  const endOfDay = useMutation({
+    mutationFn: () => api.endOfDay(batchId),
+    onSuccess: res => {
+      setNotice(`${res.marked} clientes avisados de que se les entrega mañana${res.skipped ? ` · ${res.skipped} ya tenían el aviso de hoy` : ''}`)
+      qc.invalidateQueries({ queryKey: ['route'] })
+    },
+  })
   const bounds = useMemo(() => {
     const pts: [number, number][] = (r?.stops ?? []).map(s => [s.package.dest_latitude!, s.package.dest_longitude!])
     if (r?.origin) pts.unshift(r.origin)
@@ -59,7 +103,7 @@ export default function RoutePage () {
     <div className='flex h-full flex-col'>
       <PageHeader
         title='Ruta del día'
-        subtitle='Orden de entrega por cercanía (por calles reales cuando OSRM está activo)'
+        subtitle='Sector por sector, en orden de cercanía (por calles reales cuando OSRM está activo)'
         actions={<>
           <select className={input} value={batchId ?? ''} onChange={e => setBatchId(e.target.value ? Number(e.target.value) : undefined)}>
             <option value=''>Todas las cargas abiertas</option>
@@ -67,9 +111,21 @@ export default function RoutePage () {
           </select>
           <button className={btn.ghost} onClick={useMyLocation}>⌖ Desde mi ubicación</button>
           {origin && <button className={btn.link} onClick={() => setOrigin(null)}>Quitar origen</button>}
+          <button
+            className={btn.ghost}
+            disabled={endOfDay.isPending || !r?.pending}
+            onClick={() => confirm(`¿Terminar el día? Los ${r?.pending ?? 0} paquetes pendientes se marcan como incidente “falta de tiempo” y a cada cliente se le avisa por WhatsApp que se le entrega mañana. No cuenta como intento fallido.`) && endOfDay.mutate()}
+          >
+            🌙 Terminar el día
+          </button>
         </>}
       />
-      <ErrorBox error={route.error || geoError} />
+      <ErrorBox error={route.error || geoError || endOfDay.error} />
+      {notice && (
+        <div className='mx-8 mt-3 flex justify-between rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800'>
+          {notice}<button onClick={() => setNotice(null)}>×</button>
+        </div>
+      )}
       <div className='flex min-h-0 flex-1'>
         <aside className='w-80 shrink-0 overflow-auto border-r border-slate-200 bg-white p-4'>
           {!r ? <Spinner /> : (
@@ -86,30 +142,35 @@ export default function RoutePage () {
                 )}
                 {!r.origin && <div className='text-xs text-slate-500'>Sin origen: empieza por la parada más al norte.</div>}
               </div>
-              <ol className='space-y-2'>
-                {r.stops.map(s => (
-                  <li key={s.package.id} className='flex gap-3 rounded-lg border border-slate-100 p-2 text-sm'>
-                    <span className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-bold text-white'>{s.order}</span>
-                    <div className='min-w-0'>
-                      <div className='truncate font-medium'>{s.package.customer_name ?? s.package.tracking_number}</div>
-                      <div className='text-xs text-slate-500'>
-                        {[s.package.corregimiento, s.distance_km != null && `${s.distance_km} km`, s.duration_min != null && `${Math.round(s.duration_min)} min`].filter(Boolean).join(' · ')}
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-              {r.without_location.length > 0 && (
-                <>
-                  <div className='mb-2 mt-5 text-xs font-semibold uppercase text-slate-500'>Sin ubicación ({r.without_location.length})</div>
-                  <ul className='space-y-1 text-sm'>
-                    {r.without_location.map(p => (
-                      <li key={p.id} className='truncate text-slate-600'>
-                        {p.customer_name ?? p.tracking_number} <span className='text-xs text-slate-400'>{p.corregimiento ?? ''}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </>
+              {r.sectors.map(sector => {
+                const stops = r.stops.filter(s => !s.package.out_of_route && s.package.sector === sector)
+                const noLoc = r.without_location.filter(p => p.sector === sector)
+                if (!stops.length && !noLoc.length) return null
+                return (
+                  <section key={sector} className='mb-4'>
+                    <h3 className='mb-2 flex justify-between font-bold text-slate-800'>
+                      <span>📍 {sector}</span>
+                      <span className='font-normal text-slate-500'>{stops.length + noLoc.length}</span>
+                    </h3>
+                    <ol className='space-y-2'>
+                      {stops.map(s => <StopItem key={s.package.id} s={s} />)}
+                      {noLoc.map(p => <NoLocItem key={p.id} p={p} />)}
+                    </ol>
+                  </section>
+                )
+              })}
+              {r.out_of_route > 0 && (
+                <section className='mb-4'>
+                  <h3 className='mb-1 flex justify-between font-bold' style={{ color: OUT_COLOR }}>
+                    <span>Fuera de ruta</span><span className='font-normal'>{r.out_of_route}</span>
+                  </h3>
+                  <p className='mb-2 text-xs text-slate-500'>
+                    A más de {r.outlier_km} km de las demás entregas. Van al final para no desviar la ruta.
+                  </p>
+                  <ol className='space-y-2'>
+                    {r.stops.filter(s => s.package.out_of_route).map(s => <StopItem key={s.package.id} s={s} />)}
+                  </ol>
+                </section>
               )}
             </>
           )}
@@ -124,10 +185,13 @@ export default function RoutePage () {
             {r?.geometry && <Polyline positions={r.geometry} pathOptions={{ color: '#2563eb', weight: 5, opacity: 0.8 }} />}
             {r?.origin && <Marker position={r.origin} icon={numberIcon('⌖', '#0f172a')}><Popup>Punto de salida</Popup></Marker>}
             {r?.stops.map(s => (
-              <Marker key={s.package.id} position={[s.package.dest_latitude!, s.package.dest_longitude!]} icon={numberIcon(s.order)}>
+              <Marker key={s.package.id} position={[s.package.dest_latitude!, s.package.dest_longitude!]}
+                icon={numberIcon(s.order, s.package.out_of_route ? OUT_COLOR : undefined)}>
                 <Popup>
                   <div className='space-y-1 text-sm'>
                     <div className='font-semibold'>{s.order}. {s.package.customer_name ?? '—'}</div>
+                    <div className='text-xs'>Sector: <b>{s.package.sector ?? '—'}</b></div>
+                    {s.package.out_of_route && <OutBadge />}
                     <div>{localPhone(s.package.customer_phone)}</div>
                     {s.package.address && <div className='text-xs'>{s.package.address}</div>}
                     <a href={mapsUrl(s.package.dest_latitude!, s.package.dest_longitude!)} target='_blank' rel='noreferrer'>Abrir en Google Maps</a>

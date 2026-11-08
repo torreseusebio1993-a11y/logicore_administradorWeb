@@ -2,7 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { api } from '../api/client'
-import type { Package, PackageEdit } from '../api/types'
+import type { Batch, Package, PackageEdit } from '../api/types'
 import { btn, ErrorBox, Field, formatDate, input, mapsUrl, Modal, Spinner } from './ui'
 
 const FIELDS: [keyof PackageEdit, string, string?][] = [
@@ -50,6 +50,57 @@ export function EditPackageModal ({ pkg, onClose }: { pkg: Package, onClose: () 
         <div className='flex justify-end gap-2 pt-2'>
           <button type='button' className={btn.ghost} onClick={onClose}>Cancelar</button>
           <button className={btn.primary} disabled={save.isPending}>{save.isPending ? 'Guardando…' : 'Guardar'}</button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
+/** Corregir la carga: nombre, fecha, cantidad o nota. La cantidad no puede
+ * quedar por debajo de los paquetes ya registrados. */
+export function EditBatchModal ({ batch, onClose }: { batch: Batch, onClose: () => void }) {
+  const qc = useQueryClient()
+  const [name, setName] = useState(batch.name)
+  const [date, setDate] = useState(batch.batch_date)
+  const [qty, setQty] = useState(batch.expected_packages)
+  const [notes, setNotes] = useState(batch.notes ?? '')
+  const tooLow = qty < batch.total_packages
+
+  const save = useMutation({
+    mutationFn: () => api.updateBatch(batch.id, {
+      name: name.trim(), batch_date: date, expected_packages: qty, notes: notes.trim() || null,
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['batch', batch.id] })
+      qc.invalidateQueries({ queryKey: ['batches'] })
+      onClose()
+    },
+  })
+
+  return (
+    <Modal title='Editar carga' onClose={onClose}>
+      <form className='space-y-3' onSubmit={e => { e.preventDefault(); if (!tooLow) save.mutate() }}>
+        <Field label='Nombre de la ruta'>
+          <input className={input} value={name} minLength={3} required onChange={e => setName(e.target.value)} />
+        </Field>
+        <Field label='Fecha'>
+          <input className={input} type='date' value={date} required onChange={e => setDate(e.target.value)} />
+        </Field>
+        <Field
+          label='Cantidad de paquetes'
+          hint={`Registrados: ${batch.total_packages}. Súbela si falta un paquete; para bajarla de ${batch.total_packages} borra primero los que sobran.`}
+        >
+          <input className={input} type='number' min={Math.max(1, batch.total_packages)} max={5000} value={qty} required
+            onChange={e => setQty(Number(e.target.value))} />
+        </Field>
+        {tooLow && <p className='text-sm text-red-600'>No puede ser menor que los {batch.total_packages} paquetes registrados.</p>}
+        <Field label='Observación (opcional)'>
+          <textarea className={input} rows={2} value={notes} onChange={e => setNotes(e.target.value)} />
+        </Field>
+        <ErrorBox error={save.error} />
+        <div className='flex justify-end gap-2 pt-2'>
+          <button type='button' className={btn.ghost} onClick={onClose}>Cancelar</button>
+          <button className={btn.primary} disabled={save.isPending || tooLow}>{save.isPending ? 'Guardando…' : 'Guardar'}</button>
         </div>
       </form>
     </Modal>
