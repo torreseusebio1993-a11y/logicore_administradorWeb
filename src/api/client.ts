@@ -70,7 +70,7 @@ export const api = {
   me: () => get<User>('/auth/me'),
   logout: () => post<void>('/auth/logout'),
   mySettings: () => get<UserSettings>('/auth/me/settings'),
-  saveMySettings: (s: UserSettings) => put<UserSettings>('/auth/me/settings', s),
+  saveMySettings: (s: Partial<UserSettings>) => put<UserSettings>('/auth/me/settings', s),
 
   // Cargas y paquetes
   stats: () => get<StatsSummary>('/batches/stats/summary'),

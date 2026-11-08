@@ -6,8 +6,38 @@ import { useAuth } from '../auth/AuthContext'
 import { PageHeader } from '../components/Layout'
 import { btn, ErrorBox, Field, input, Spinner } from '../components/ui'
 
-const hourLabel = (h: number) =>
-  h === 24 ? '12:00 a. m. (medianoche)' : `${h % 12 === 0 ? 12 : h % 12}:00 ${h < 12 ? 'a. m.' : 'p. m.'}`
+// Minutos desde la medianoche ↔ "HH:MM" (input type=time). 1440 = medianoche.
+const toClock = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
+const fromClock = (v: string, isEnd = false) => {
+  const [h, m] = v.split(':').map(Number)
+  const total = h * 60 + m
+  return isEnd && total === 0 ? 1440 : total
+}
+
+type Unit = [label: string, factor: number]
+const SECONDS: Unit[] = [['segundos', 1], ['minutos', 60]]
+const MINUTES: Unit[] = [['minutos', 1], ['horas', 60]]
+
+/** Número + unidad (45 minutos, 2 horas). `value` en la unidad base. */
+function DurationInput ({ value, units, min, max, onChange }: {
+  value: number, units: Unit[], min: number, max: number, onChange: (v: number) => void,
+}) {
+  // La unidad más grande que lo representa exacto: 120 min → 2 horas
+  const [factor, setFactor] = useState(() =>
+    [...units].reverse().find(([, f]) => value >= f && value % f === 0)?.[1] ?? units[0][1])
+  const [text, setText] = useState(String(value / factor))
+  return (
+    <div className='flex gap-2'>
+      <input className={input} type='number' min={Math.ceil(min / factor)} max={Math.floor(max / factor)}
+        value={text} required
+        onChange={e => { setText(e.target.value); onChange(Number(e.target.value) * factor) }} />
+      <select className={`${input} w-32`} value={factor}
+        onChange={e => { const f = Number(e.target.value); setFactor(f); onChange(Number(text) * f) }}>
+        {units.map(([label, f]) => <option key={f} value={f}>{label}</option>)}
+      </select>
+    </div>
+  )
+}
 
 export default function SettingsPage () {
   const { user } = useAuth()
@@ -18,7 +48,11 @@ export default function SettingsPage () {
   useEffect(() => { if (data) setForm(data) }, [data])
 
   const save = useMutation({
-    mutationFn: () => api.saveMySettings(form!),
+    mutationFn: () => {
+      // Solo el formato nuevo (en minutos); las horas son para apps viejas
+      const { wa_start_hour: _a, wa_end_hour: _b, wa_retry_hours: _c, ...rest } = form!
+      return api.saveMySettings(rest)
+    },
     onSuccess: d => {
       qc.setQueryData(['my-settings'], d)
       qc.invalidateQueries({ queryKey: ['wa-accounts'] })
@@ -26,6 +60,7 @@ export default function SettingsPage () {
     },
   })
   const set = (k: keyof UserSettings, v: number | boolean) => { setForm(f => f && { ...f, [k]: v }); setSaved(false) }
+  const badWindow = form ? form.wa_end_min <= form.wa_start_min : false
 
   return (
     <>
@@ -43,25 +78,24 @@ export default function SettingsPage () {
             </div>
             <div className='grid grid-cols-2 gap-4'>
               <Field label='Desde'>
-                <select className={input} value={form.wa_start_hour} onChange={e => set('wa_start_hour', Number(e.target.value))}>
-                  {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{hourLabel(h)}</option>)}
-                </select>
+                <input className={input} type='time' value={toClock(form.wa_start_min)} required
+                  onChange={e => e.target.value && set('wa_start_min', fromClock(e.target.value))} />
               </Field>
-              <Field label='Hasta'>
-                <select className={input} value={form.wa_end_hour} onChange={e => set('wa_end_hour', Number(e.target.value))}>
-                  {Array.from({ length: 24 }, (_, i) => i + 1).map(h => <option key={h} value={h}>{hourLabel(h)}</option>)}
-                </select>
+              <Field label='Hasta' hint='00:00 = medianoche'>
+                <input className={input} type='time' value={toClock(form.wa_end_min)} required
+                  onChange={e => e.target.value && set('wa_end_min', fromClock(e.target.value, true))} />
               </Field>
             </div>
-            <Field label='Pausa entre mensajes (segundos)' hint='Mínimo 10. Más pausa = menos riesgo de bloqueo'>
-              <input className={input} type='number' min={10} max={3600} value={form.wa_min_interval_s}
-                onChange={e => set('wa_min_interval_s', Number(e.target.value))} required />
+            <Field label='Pausa entre mensajes' hint='Mínimo 10 segundos. Más pausa = menos riesgo de bloqueo'>
+              <DurationInput value={form.wa_min_interval_s} units={SECONDS} min={10} max={3600}
+                onChange={v => set('wa_min_interval_s', v)} />
             </Field>
             <Field label='Clientes por día, por cuenta'
               hint='Cuenta clientes distintos, no mensajes: escribirle varias veces al mismo cliente gasta 1. En números nuevos empieza bajo (20–30)'>
               <input className={input} type='number' min={1} max={1000} value={form.wa_daily_limit}
                 onChange={e => set('wa_daily_limit', Number(e.target.value))} required />
             </Field>
+
             <div className='pt-2'>
               <h2 className='font-semibold'>Reintento para pedir ubicación</h2>
               <p className='text-sm text-slate-500'>
@@ -70,9 +104,9 @@ export default function SettingsPage () {
               </p>
             </div>
             <div className='grid grid-cols-2 gap-4'>
-              <Field label='Volver a pedir a las (horas)'>
-                <input className={input} type='number' min={1} max={168} value={form.wa_retry_hours}
-                  onChange={e => set('wa_retry_hours', Number(e.target.value))} required />
+              <Field label='Volver a pedir a los'>
+                <DurationInput value={form.wa_retry_min} units={MINUTES} min={5} max={10080}
+                  onChange={v => set('wa_retry_min', v)} />
               </Field>
               <Field label='Reintentos'>
                 <select className={input} value={form.wa_max_retries} onChange={e => set('wa_max_retries', Number(e.target.value))}>
@@ -80,6 +114,13 @@ export default function SettingsPage () {
                 </select>
               </Field>
             </div>
+            {form.wa_retry_min < 30 && (
+              <p className='rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800'>
+                ⚠️ Menos de 30 minutos: el cliente quizá ni vio el primer mensaje y la insistencia
+                aumenta el riesgo de que WhatsApp bloquee el número.
+              </p>
+            )}
+
             <div className='pt-2'>
               <h2 className='font-semibold'>Avisos automáticos al cliente</h2>
             </div>
@@ -96,9 +137,14 @@ export default function SettingsPage () {
                 onChange={e => set('wa_auto_eta_reply', e.target.checked)} />
               <span>
                 <b>Responder “¿a qué hora llega?”</b>
-                <span className='block text-slate-500'>Contesta con un tiempo aproximado según su puesto en la ruta (máximo una vez cada 30 minutos por cliente).</span>
+                <span className='block text-slate-500'>Contesta con un tiempo aproximado según su puesto en la ruta.</span>
               </span>
             </label>
+            <Field label='Esperar entre respuestas al mismo cliente'>
+              <DurationInput value={form.wa_eta_cooldown_min} units={MINUTES} min={5} max={1440}
+                onChange={v => set('wa_eta_cooldown_min', v)} />
+            </Field>
+
             <div className='pt-2'>
               <h2 className='font-semibold'>Ruta</h2>
             </div>
@@ -107,11 +153,17 @@ export default function SettingsPage () {
               <input className={input} type='number' min={0.5} max={50} step={0.5} value={form.route_outlier_km}
                 onChange={e => set('route_outlier_km', Number(e.target.value))} required />
             </Field>
-            {form.wa_end_hour <= form.wa_start_hour && (
+            <Field label='Minutos por entrega'
+              hint='Lo que tardas en cada cliente (estacionar, entregar). Se usa para calcular la hora de llegada'>
+              <input className={input} type='number' min={0} max={60} value={form.route_service_min}
+                onChange={e => set('route_service_min', Number(e.target.value))} required />
+            </Field>
+
+            {badWindow && (
               <p className='text-sm text-red-600'>La hora de fin debe ser después de la de inicio.</p>
             )}
             <div className='flex items-center gap-3'>
-              <button className={btn.primary} disabled={save.isPending || form.wa_end_hour <= form.wa_start_hour}>
+              <button className={btn.primary} disabled={save.isPending || badWindow}>
                 {save.isPending ? 'Guardando…' : 'Guardar'}
               </button>
               {saved && <span className='text-sm text-green-700'>✓ Guardado</span>}

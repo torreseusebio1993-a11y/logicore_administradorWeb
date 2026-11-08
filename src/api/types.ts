@@ -73,6 +73,8 @@ export interface WaAccount {
   min_interval_s: number
   sent_today: number
   clients_today: number      // clientes distintos hoy: cuenta para el límite
+  send_start_min: number     // minutos desde la medianoche
+  send_end_min: number
   send_start_hour: number
   send_end_hour: number
   user_id: number | null
@@ -159,14 +161,21 @@ export interface CustomerDetail extends CustomerSummary {
   history: Package[]
 }
 
+// Tiempos en minutos (la pausa entre mensajes, en segundos)
 export interface UserSettings {
-  wa_start_hour: number
-  wa_end_hour: number
+  wa_start_min: number       // minutos desde la medianoche (8:30 a. m. = 510)
+  wa_end_min: number         // 1440 = medianoche
   wa_min_interval_s: number
   wa_daily_limit: number     // clientes distintos por día
-  wa_retry_hours: number
+  wa_retry_min: number
   wa_max_retries: number
+  wa_eta_cooldown_min: number
   route_outlier_km: number
+  route_service_min: number
+  // Formato anterior (horas), solo lectura
+  wa_start_hour?: number
+  wa_end_hour?: number
+  wa_retry_hours?: number
   wa_auto_on_the_way: boolean   // aviso "vamos en camino" automático
   wa_auto_eta_reply: boolean    // responder "¿a qué hora llega?"
 }

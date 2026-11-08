@@ -168,6 +168,10 @@ function TemplateModal ({ onClose }: { onClose: () => void }) {
 
 // ── Página ──────────────────────────────────────────────
 
+
+/** 510 → "8:30" (horario de envío) */
+const clock = (m: number) => m >= 1440 ? '24:00' : `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`
+
 export default function WhatsAppPage () {
   const qc = useQueryClient()
   const accounts = useQuery({ queryKey: ['wa-accounts'], queryFn: api.waAccounts, refetchInterval: 5000 })
@@ -233,7 +237,7 @@ export default function WhatsAppPage () {
                       <div className={`h-2 rounded ${usage >= 1 ? 'bg-red-500' : 'bg-wa'}`} style={{ width: `${usage * 100}%` }} />
                     </div>
                     <div className='mt-1 text-xs text-slate-500'>
-                      {a.clients_today}/{a.daily_limit} clientes hoy ({a.sent_today} mensajes) · pausa {a.min_interval_s}s · {a.send_start_hour}:00–{a.send_end_hour}:00
+                      {a.clients_today}/{a.daily_limit} clientes hoy ({a.sent_today} mensajes) · pausa {a.min_interval_s}s · {clock(a.send_start_min)}–{clock(a.send_end_min)}
                     </div>
                   </div>
                   <div className='flex flex-wrap gap-3 border-t border-slate-100 pt-3'>
