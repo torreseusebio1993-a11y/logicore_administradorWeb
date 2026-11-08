@@ -14,7 +14,7 @@ function OutBadge () {
   return <Badge color='bg-orange-100 text-orange-700'>Fuera de ruta</Badge>
 }
 
-function StopItem ({ s }: { s: RouteStop }) {
+function StopItem ({ s, onNotify }: { s: RouteStop, onNotify?: (p: Package) => void }) {
   return (
     <li className='flex gap-3 rounded-lg border border-slate-100 p-2 text-sm'>
       <span className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white'
@@ -24,6 +24,11 @@ function StopItem ({ s }: { s: RouteStop }) {
         <div className='text-xs text-slate-500'>
           {[s.package.address, s.distance_km != null && `${s.distance_km} km`, s.duration_min != null && `${Math.round(s.duration_min)} min`].filter(Boolean).join(' · ')}
         </div>
+        {onNotify && s.package.customer_phone && (
+          <button className='text-xs font-medium text-green-700 hover:underline' onClick={() => onNotify(s.package)}>
+            💬 Avisar en camino
+          </button>
+        )}
       </div>
     </li>
   )
@@ -85,6 +90,13 @@ export default function RoutePage () {
 
   const r = route.data
 
+  const notify = useMutation({
+    mutationFn: (p: Package) => api.onTheWay(p.id).then(res => ({ res, p })),
+    onSuccess: ({ res, p }) => setNotice(res.queued
+      ? `Aviso “en camino” en cola para ${p.customer_name ?? 'el cliente'} (llegada ${res.tiempo})`
+      : res.reason ?? 'No se envió'),
+  })
+
   // Terminar el día: lo pendiente pasa a mañana y se avisa a cada cliente
   const endOfDay = useMutation({
     mutationFn: () => api.endOfDay(batchId),
@@ -120,7 +132,7 @@ export default function RoutePage () {
           </button>
         </>}
       />
-      <ErrorBox error={route.error || geoError || endOfDay.error} />
+      <ErrorBox error={route.error || geoError || endOfDay.error || notify.error} />
       {notice && (
         <div className='mx-8 mt-3 flex justify-between rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800'>
           {notice}<button onClick={() => setNotice(null)}>×</button>
@@ -153,7 +165,7 @@ export default function RoutePage () {
                       <span className='font-normal text-slate-500'>{stops.length + noLoc.length}</span>
                     </h3>
                     <ol className='space-y-2'>
-                      {stops.map(s => <StopItem key={s.package.id} s={s} />)}
+                      {stops.map(s => <StopItem key={s.package.id} s={s} onNotify={notify.mutate} />)}
                       {noLoc.map(p => <NoLocItem key={p.id} p={p} />)}
                     </ol>
                   </section>

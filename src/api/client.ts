@@ -78,6 +78,8 @@ export const api = {
   batch: (id: number) => get<Batch>(`/batches/${id}`),
   closeBatch: (id: number) => post<Batch>(`/batches/${id}/close`),
   updateBatch: (id: number, data: BatchEdit) => patch<Batch>(`/batches/${id}`, data),
+  onTheWay: (packageId: number) =>
+    post<{ queued: boolean, tiempo?: string, reason?: string }>(`/packages/${packageId}/on-the-way`, {}),
   endOfDay: (batchId?: number) =>
     post<{ marked: number, skipped: number }>('/packages/incident/end-of-day',
       batchId ? { batch_id: batchId } : {}),

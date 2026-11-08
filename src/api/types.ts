@@ -167,6 +167,8 @@ export interface UserSettings {
   wa_retry_hours: number
   wa_max_retries: number
   route_outlier_km: number
+  wa_auto_on_the_way: boolean   // aviso "vamos en camino" automático
+  wa_auto_eta_reply: boolean    // responder "¿a qué hora llega?"
 }
 
 export type BatchEdit = Partial<Pick<Batch, 'name' | 'batch_date' | 'expected_packages' | 'notes'>>

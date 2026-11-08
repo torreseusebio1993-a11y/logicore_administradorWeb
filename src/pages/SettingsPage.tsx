@@ -25,7 +25,7 @@ export default function SettingsPage () {
       setSaved(true)
     },
   })
-  const set = (k: keyof UserSettings, v: number) => { setForm(f => f && { ...f, [k]: v }); setSaved(false) }
+  const set = (k: keyof UserSettings, v: number | boolean) => { setForm(f => f && { ...f, [k]: v }); setSaved(false) }
 
   return (
     <>
@@ -80,6 +80,25 @@ export default function SettingsPage () {
                 </select>
               </Field>
             </div>
+            <div className='pt-2'>
+              <h2 className='font-semibold'>Avisos automáticos al cliente</h2>
+            </div>
+            <label className='flex items-start gap-3 text-sm'>
+              <input type='checkbox' className='mt-1' checked={form.wa_auto_on_the_way}
+                onChange={e => set('wa_auto_on_the_way', e.target.checked)} />
+              <span>
+                <b>Avisar “vamos en camino”</b>
+                <span className='block text-slate-500'>Al entregar al anterior o tocar Navegar en la app: le llega el tiempo aproximado y que tenga su identificación a mano.</span>
+              </span>
+            </label>
+            <label className='flex items-start gap-3 text-sm'>
+              <input type='checkbox' className='mt-1' checked={form.wa_auto_eta_reply}
+                onChange={e => set('wa_auto_eta_reply', e.target.checked)} />
+              <span>
+                <b>Responder “¿a qué hora llega?”</b>
+                <span className='block text-slate-500'>Contesta con un tiempo aproximado según su puesto en la ruta (máximo una vez cada 30 minutos por cliente).</span>
+              </span>
+            </label>
             <div className='pt-2'>
               <h2 className='font-semibold'>Ruta</h2>
             </div>
