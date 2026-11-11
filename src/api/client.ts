@@ -1,7 +1,7 @@
 // Cliente de la API. El panel se autentica con la sesión del usuario
 // (Authorization: Bearer); NUNCA con la API key de la app móvil.
 import type {
-  Batch, BatchEdit, CustomerDetail, CustomerSummary, Package, PackageEdit, StatsSummary, TodayRoute, User, UserSettings,
+  Batch, BatchEdit, CustomerDetail, MonitorErrors, MonitorMetrics, MonitorStatus, CustomerSummary, Package, PackageEdit, StatsSummary, TodayRoute, User, UserSettings,
   WaAccount, WaMessage, WaTemplate,
 } from './types'
 
@@ -26,7 +26,8 @@ export const tokenStore = {
 export const SESSION_EXPIRED = 'logicore:session-expired'
 
 async function request<T> (method: string, path: string, body?: unknown): Promise<T> {
-  const headers: Record<string, string> = {}
+  // X-Client: el monitoreo distingue el panel de la app móvil
+  const headers: Record<string, string> = { 'X-Client': 'panel' }
   const token = tokenStore.get()
   if (token) headers.Authorization = `Bearer ${token}`
   if (body !== undefined) headers['Content-Type'] = 'application/json'
@@ -129,4 +130,12 @@ export const api = {
   waQueue: () => get<Record<string, number>>('/whatsapp/queue'),
   waTemplates: () => get<WaTemplate[]>('/whatsapp/templates'),
   waUpdateTemplate: (key: string, body: string) => put<WaTemplate>(`/whatsapp/templates/${key}`, { body }),
+
+  // Monitoreo
+  monitorStatus: () => get<MonitorStatus>('/monitor/status'),
+  monitorMetrics: (days: number) => get<MonitorMetrics>(`/monitor/metrics?days=${days}`),
+  monitorErrors: (hours: number, source?: string) =>
+    get<MonitorErrors>(`/monitor/errors?hours=${hours}${source ? `&source=${source}` : ''}`),
+  monitorCheckAlerts: () =>
+    post<{ problems: Record<string, string>, notified: number, lines: string[] }>('/monitor/check-alerts'),
 }

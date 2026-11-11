@@ -174,6 +174,27 @@ export default function SettingsPage () {
             </div>
 
             <div className='pt-2'>
+              <h2 className='font-semibold'>Alertas del monitoreo</h2>
+              <p className='text-sm text-slate-500'>
+                Si algo falla (WhatsApp desconectado, disco casi lleno, muchos errores, el OCR no lee…)
+                te llega un WhatsApp a este número, y otro cuando se resuelve.
+              </p>
+            </div>
+            <div className='grid grid-cols-3 items-end gap-4'>
+              <div className='col-span-2'>
+                <Field label='Tu celular para alertas' hint='Mejor un número distinto a las cuentas de reparto'>
+                  <input className={input} value={form.alert_phone ?? ''} placeholder='6XXX-XXXX'
+                    onChange={e => set('alert_phone', e.target.value)} />
+                </Field>
+              </div>
+              <label className='flex items-center gap-2 pb-2 text-sm'>
+                <input type='checkbox' checked={form.alerts_enabled}
+                  onChange={e => set('alerts_enabled', e.target.checked)} />
+                Activadas
+              </label>
+            </div>
+
+            <div className='pt-2'>
               <h2 className='font-semibold'>Ruta</h2>
             </div>
             <Field label='Marcar “fuera de ruta” a más de (km)'

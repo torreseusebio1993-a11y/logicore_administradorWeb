@@ -8,6 +8,7 @@ import CustomersPage from './pages/CustomersPage'
 import DashboardPage from './pages/DashboardPage'
 import LoginPage from './pages/LoginPage'
 import MapPage from './pages/MapPage'
+import MonitorPage from './pages/MonitorPage'
 import RoutePage from './pages/RoutePage'
 import SettingsPage from './pages/SettingsPage'
 import WhatsAppPage from './pages/WhatsAppPage'
@@ -32,6 +33,7 @@ export default function App () {
         <Route path='mapa' element={<MapPage />} />
         <Route path='ruta' element={<RoutePage />} />
         <Route path='whatsapp' element={<WhatsAppPage />} />
+        <Route path='monitoreo' element={<MonitorPage />} />
         <Route path='ajustes' element={<SettingsPage />} />
       </Route>
       <Route path='*' element={<Navigate to='/' replace />} />
