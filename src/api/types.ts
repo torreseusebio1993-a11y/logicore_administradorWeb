@@ -56,6 +56,7 @@ export interface Package {
   // Calculados por el backend
   sector: string | null
   out_of_route: boolean
+  access_control?: boolean   // residencial con garita (solo en la ruta)
 }
 
 export type PackageEdit = Partial<Pick<Package,
@@ -172,6 +173,10 @@ export interface UserSettings {
   wa_eta_cooldown_min: number
   route_outlier_km: number
   route_service_min: number
+  driver_name: string | null    // perfil del repartidor (aviso en residenciales con garita)
+  vehicle: string | null
+  vehicle_plate: string | null
+  access_keywords: string       // "PH, Torre, Edificio, Condominio, Garita"
   // Formato anterior (horas), solo lectura
   wa_start_hour?: number
   wa_end_hour?: number

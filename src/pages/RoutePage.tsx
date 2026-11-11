@@ -20,7 +20,10 @@ function StopItem ({ s, onNotify }: { s: RouteStop, onNotify?: (p: Package) => v
       <span className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white'
         style={{ background: s.package.out_of_route ? OUT_COLOR : '#2563eb' }}>{s.order}</span>
       <div className='min-w-0'>
-        <div className='truncate font-medium'>{s.package.customer_name ?? s.package.tracking_number}</div>
+        <div className='truncate font-medium'>
+          {s.package.customer_name ?? s.package.tracking_number}
+          {s.package.access_control && <span className='ml-1 text-xs text-violet-700'>🔐 Garita</span>}
+        </div>
         <div className='text-xs text-slate-500'>
           {[s.package.address, s.distance_km != null && `${s.distance_km} km`, s.duration_min != null && `${Math.round(s.duration_min)} min`].filter(Boolean).join(' · ')}
         </div>

@@ -59,7 +59,7 @@ export default function SettingsPage () {
       setSaved(true)
     },
   })
-  const set = (k: keyof UserSettings, v: number | boolean) => { setForm(f => f && { ...f, [k]: v }); setSaved(false) }
+  const set = (k: keyof UserSettings, v: number | boolean | string) => { setForm(f => f && { ...f, [k]: v }); setSaved(false) }
   const badWindow = form ? form.wa_end_min <= form.wa_start_min : false
 
   return (
@@ -144,6 +144,34 @@ export default function SettingsPage () {
               <DurationInput value={form.wa_eta_cooldown_min} units={MINUTES} min={5} max={1440}
                 onChange={v => set('wa_eta_cooldown_min', v)} />
             </Field>
+
+            <div className='pt-2'>
+              <h2 className='font-semibold'>Residenciales con control de acceso</h2>
+              <p className='text-sm text-slate-500'>
+                Si la dirección o la barriada del cliente tiene una de estas palabras, el aviso
+                “vamos en camino” le pide que te anuncie en la garita con tu nombre, vehículo y placa
+                (plantilla “Residencial con control de acceso”).
+              </p>
+            </div>
+            <Field label='Palabras clave (separadas por coma)' hint='Puedes agregar barriadas completas: “Costa Verde, Bosque Dorado”'>
+              <input className={input} value={form.access_keywords} placeholder='PH, Torre, Edificio, Condominio, Garita'
+                onChange={e => set('access_keywords', e.target.value)} />
+            </Field>
+            <Field label='Tu nombre (como lo verá el cliente)'>
+              <input className={input} value={form.driver_name ?? ''} onChange={e => set('driver_name', e.target.value)} />
+            </Field>
+            <div className='grid grid-cols-3 gap-4'>
+              <div className='col-span-2'>
+                <Field label='Vehículo y color'>
+                  <input className={input} value={form.vehicle ?? ''} placeholder='Toyota Hilux blanca'
+                    onChange={e => set('vehicle', e.target.value)} />
+                </Field>
+              </div>
+              <Field label='Placa'>
+                <input className={`${input} uppercase`} value={form.vehicle_plate ?? ''}
+                  onChange={e => set('vehicle_plate', e.target.value)} />
+              </Field>
+            </div>
 
             <div className='pt-2'>
               <h2 className='font-semibold'>Ruta</h2>
