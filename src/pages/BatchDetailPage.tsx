@@ -6,7 +6,7 @@ import type { Package } from '../api/types'
 import { PageHeader } from '../components/Layout'
 import { ConversationModal, EditBatchModal, EditPackageModal } from '../components/PackageModals'
 import {
-  Badge, btn, contactStatus, ErrorBox, formatDate, input, localPhone, locationStatus,
+  Badge, btn, contactStatus, ErrorBox, formatDate, input, localPhone, locationStatus, mapAddress,
   mapsUrl, packageStatus, Spinner,
 } from '../components/ui'
 
@@ -151,6 +151,7 @@ export default function BatchDetailPage () {
                         <div className='font-medium'>{p.customer_name ?? '—'}</div>
                         <div className='text-xs text-slate-500'>{localPhone(p.customer_phone)}</div>
                         {p.address && <div className='max-w-xs truncate text-xs text-slate-500' title={p.address}>{p.address}</div>}
+                        {mapAddress(p) && <div className='max-w-xs truncate text-xs text-emerald-700' title={`Según el mapa: ${mapAddress(p)}`}>📍 {mapAddress(p)}</div>}
                       </td>
                       <td className='px-4 py-3 font-mono text-xs'>
                         {p.tracking_number ?? '—'}

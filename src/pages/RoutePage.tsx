@@ -5,7 +5,7 @@ import { MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from 'react-
 import { api } from '../api/client'
 import type { Package, RouteStop } from '../api/types'
 import { PageHeader } from '../components/Layout'
-import { Badge, btn, ErrorBox, input, localPhone, mapsUrl, Spinner } from '../components/ui'
+import { Badge, btn, ErrorBox, input, localPhone, mapAddress, mapsUrl, Spinner } from '../components/ui'
 
 const DEFAULT_CENTER: [number, number] = [8.88, -79.78]
 const OUT_COLOR = '#ea580c'
@@ -25,7 +25,7 @@ function StopItem ({ s, onNotify }: { s: RouteStop, onNotify?: (p: Package) => v
           {s.package.access_control && <span className='ml-1 text-xs text-violet-700'>🔐 Garita</span>}
         </div>
         <div className='text-xs text-slate-500'>
-          {[s.package.address, s.distance_km != null && `${s.distance_km} km`, s.duration_min != null && `${Math.round(s.duration_min)} min`].filter(Boolean).join(' · ')}
+          {[mapAddress(s.package) ? `📍 ${mapAddress(s.package)}` : s.package.address, s.distance_km != null && `${s.distance_km} km`, s.duration_min != null && `${Math.round(s.duration_min)} min`].filter(Boolean).join(' · ')}
         </div>
         {onNotify && s.package.customer_phone && (
           <button className='text-xs font-medium text-green-700 hover:underline' onClick={() => onNotify(s.package)}>

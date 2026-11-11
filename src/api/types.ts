@@ -52,6 +52,9 @@ export interface Package {
   dest_latitude: number | null
   dest_longitude: number | null
   location_received_at: string | null
+  geo_barriada: string | null     // dirección real según el mapa
+  geo_calle: string | null
+  geo_referencia: string | null
   created_at: string
   // Calculados por el backend
   sector: string | null

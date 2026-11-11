@@ -103,6 +103,12 @@ export function localPhone (phone: string | null) {
   return d.length === 8 ? `${d.slice(0, 4)}-${d.slice(4)}` : phone
 }
 
+/** "Residencial Los Laureles · Avenida Libertador · cerca de Casa X" (según el mapa) */
+export function mapAddress (p: { geo_barriada: string | null, geo_calle: string | null, geo_referencia: string | null }) {
+  const parts = [p.geo_barriada, p.geo_calle, p.geo_referencia && `cerca de ${p.geo_referencia}`].filter(Boolean)
+  return parts.length ? parts.join(' · ') : null
+}
+
 export function formatDate (iso: string, withTime = false) {
   const d = new Date(iso.length === 10 ? `${iso}T12:00:00` : iso)
   return d.toLocaleString('es-PA', withTime
