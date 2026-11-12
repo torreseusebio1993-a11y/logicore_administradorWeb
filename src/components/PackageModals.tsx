@@ -1,8 +1,8 @@
 // Editar paquete y ver la conversación de WhatsApp con el cliente.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { api } from '../api/client'
-import type { Batch, Package, PackageEdit } from '../api/types'
+import { api, fileUrl } from '../api/client'
+import type { Batch, Package, PackageEdit, WaMessage } from '../api/types'
 import { btn, ErrorBox, Field, formatDate, input, mapsUrl, Modal, Spinner } from './ui'
 
 const FIELDS: [keyof PackageEdit, string, string?][] = [
@@ -111,6 +111,29 @@ const STATUS_TEXT: Record<string, string> = {
   queued: 'en cola', sending: 'enviando…', sent: '✓', delivered: '✓✓', read: '✓✓ leído', failed: 'falló',
 }
 
+const MEDIA_LABEL: Record<string, string> = {
+  image: '📷 Foto', audio: '🎤 Nota de voz', video: '🎬 Video', document: '📄 Documento',
+}
+
+/** Foto, nota de voz, video o documento dentro del chat. */
+function MediaView ({ m }: { m: WaMessage }) {
+  const label = MEDIA_LABEL[m.kind] ?? 'Archivo'
+  if (!m.media_url) {
+    return <div className='italic text-slate-500'>{label} {m.media_expired ? '(ya no está: se guardan 30 días)' : '(no se pudo descargar)'}</div>
+  }
+  const url = fileUrl(m.media_url)
+  if (m.kind === 'image') {
+    return (
+      <a href={url} target='_blank' rel='noreferrer'>
+        <img src={url} alt='Foto del cliente' className='mb-1 max-h-64 rounded-lg' loading='lazy' />
+      </a>
+    )
+  }
+  if (m.kind === 'audio') return <audio controls preload='none' src={url} className='mb-1 w-64' />
+  if (m.kind === 'video') return <video controls preload='none' src={url} className='mb-1 max-h-64 rounded-lg' />
+  return <a href={url} target='_blank' rel='noreferrer' className='font-medium text-green-700 hover:underline'>{label}: abrir</a>
+}
+
 /** 507XXXXXXXX si es un celular de Panamá (como el backend). */
 function waPhone (raw: string | null | undefined): string | null {
   let d = (raw ?? '').replace(/\D/g, '')
@@ -149,10 +172,12 @@ export function ConversationModal ({ pkg, onClose }: { pkg: Package, onClose: ()
                     📍 Ubicación compartida
                   </a>
                 )}
+                {m.kind !== 'text' && m.kind !== 'location' && <MediaView m={m} />}
                 {m.body && <div className='whitespace-pre-wrap'>{m.body}</div>}
                 {m.error && <div className='text-xs text-red-600'>{m.error}</div>}
                 <div className='mt-1 text-right text-[11px] text-slate-500'>
                   {formatDate(m.created_at, true)} {m.direction === 'out' ? STATUS_TEXT[m.status] ?? '' : ''}
+                  {m.template_key === 'phone' && ' · desde el celular'}
                 </div>
               </div>
             </div>

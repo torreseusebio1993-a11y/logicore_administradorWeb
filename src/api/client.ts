@@ -6,6 +6,8 @@ import type {
 } from './types'
 
 const BASE = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/$/, '')
+/** URL completa de un archivo del backend (fotos y audios de WhatsApp). */
+export const fileUrl = (path: string) => BASE + path
 const TOKEN_KEY = 'logicore.token'
 
 export class ApiError extends Error {

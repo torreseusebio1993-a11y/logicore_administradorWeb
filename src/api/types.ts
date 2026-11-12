@@ -94,7 +94,7 @@ export interface WaMessage {
   account_id: number | null
   package_id: number | null
   direction: 'out' | 'in'
-  kind: 'text' | 'location'
+  kind: 'text' | 'location' | 'image' | 'audio' | 'video' | 'document'
   body: string | null
   latitude: number | null
   longitude: number | null
@@ -102,6 +102,10 @@ export interface WaMessage {
   error: string | null
   created_at: string
   sent_at: string | null
+  template_key: string | null     // manual | phone (desde el celular) | plantilla
+  media_url: string | null        // enlace firmado (vence en 1 hora)
+  media_mime: string | null
+  media_expired: boolean          // el archivo se borró (se guardan 30 días)
 }
 
 export interface WaTemplate {
