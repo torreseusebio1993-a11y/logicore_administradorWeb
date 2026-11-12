@@ -60,7 +60,7 @@ export default function SettingsPage () {
     },
   })
   const set = (k: keyof UserSettings, v: number | boolean | string) => { setForm(f => f && { ...f, [k]: v }); setSaved(false) }
-  const badWindow = form ? form.wa_end_min <= form.wa_start_min : false
+  const badWindow = form ? !form.wa_all_day && form.wa_end_min <= form.wa_start_min : false
 
   return (
     <>
@@ -73,10 +73,19 @@ export default function SettingsPage () {
             <div>
               <h2 className='font-semibold'>Mensajes de WhatsApp</h2>
               <p className='text-sm text-slate-500'>
-                Aplican a tus cuentas de WhatsApp. Fuera del horario los mensajes esperan en cola.
+                Aplican a tus cuentas de WhatsApp. Fuera del horario los mensajes automáticos esperan
+                en cola. Lo que escribes tú en el chat sale siempre.
               </p>
             </div>
-            <div className='grid grid-cols-2 gap-4'>
+            <label className='flex items-start gap-3 text-sm'>
+              <input type='checkbox' className='mt-1' checked={form.wa_all_day}
+                onChange={e => set('wa_all_day', e.target.checked)} />
+              <span>
+                <b>Disponible las 24 horas</b>
+                <span className='block text-slate-500'>Sin horario: los mensajes salen a cualquier hora.</span>
+              </span>
+            </label>
+            {!form.wa_all_day && <div className='grid grid-cols-2 gap-4'>
               <Field label='Desde'>
                 <input className={input} type='time' value={toClock(form.wa_start_min)} required
                   onChange={e => e.target.value && set('wa_start_min', fromClock(e.target.value))} />
@@ -85,7 +94,7 @@ export default function SettingsPage () {
                 <input className={input} type='time' value={toClock(form.wa_end_min)} required
                   onChange={e => e.target.value && set('wa_end_min', fromClock(e.target.value, true))} />
               </Field>
-            </div>
+            </div>}
             <Field label='Pausa entre mensajes' hint='Mínimo 10 segundos. Más pausa = menos riesgo de bloqueo'>
               <DurationInput value={form.wa_min_interval_s} units={SECONDS} min={10} max={3600}
                 onChange={v => set('wa_min_interval_s', v)} />
@@ -148,11 +157,20 @@ export default function SettingsPage () {
             <div className='pt-2'>
               <h2 className='font-semibold'>Residenciales con control de acceso</h2>
               <p className='text-sm text-slate-500'>
-                Si la dirección o la barriada del cliente tiene una de estas palabras, el aviso
-                “vamos en camino” le pide que te anuncie en la garita con tu nombre, vehículo y placa
-                (plantilla “Residencial con control de acceso”).
+                Si la dirección, el sector o la barriada del mapa tiene una de estas palabras, el cliente
+                se marca con 🔐 y recibe un mensaje aparte pidiendo que te anuncie en la garita con tu
+                nombre, vehículo y placa (plantilla “Aviso de garita”). En la ruta puedes enviarlo a mano
+                o marcar/desmarcar al cliente; la marca se recuerda.
               </p>
             </div>
+            <label className='flex items-start gap-3 text-sm'>
+              <input type='checkbox' className='mt-1' checked={form.wa_auto_access_notice}
+                onChange={e => set('wa_auto_access_notice', e.target.checked)} />
+              <span>
+                <b>Aviso de garita automático</b>
+                <span className='block text-slate-500'>En los mismos momentos que “vamos en camino”, pero es independiente: puedes tener uno sin el otro.</span>
+              </span>
+            </label>
             <Field label='Palabras clave (separadas por coma)' hint='Puedes agregar barriadas completas: “Costa Verde, Bosque Dorado”'>
               <input className={input} value={form.access_keywords} placeholder='PH, Torre, Edificio, Condominio, Garita'
                 onChange={e => set('access_keywords', e.target.value)} />

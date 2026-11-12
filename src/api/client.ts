@@ -130,6 +130,11 @@ export const api = {
     post<{ queued: number, skipped: { package_id: number, tracking: string | null, reason: string }[] }>(
       `/whatsapp/batches/${batchId}/request-location`),
   waMessages: (packageId: number) => get<WaMessage[]>(`/whatsapp/packages/${packageId}/messages`),
+  waSend: (packageId: number, body: string) =>
+    post<WaMessage>(`/whatsapp/packages/${packageId}/messages`, { body }),
+  accessNotice: (packageId: number) => post<{ queued: boolean }>(`/packages/${packageId}/access-notice`),
+  setAccessControl: (packageId: number, value: boolean | null) =>
+    request<{ access_control: boolean }>('PUT', `/packages/${packageId}/access-control`, { value }),
   waQueue: () => get<Record<string, number>>('/whatsapp/queue'),
   waTemplates: () => get<WaTemplate[]>('/whatsapp/templates'),
   waUpdateTemplate: (key: string, body: string) => put<WaTemplate>(`/whatsapp/templates/${key}`, { body }),

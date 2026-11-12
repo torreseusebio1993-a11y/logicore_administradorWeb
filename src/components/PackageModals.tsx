@@ -111,15 +111,33 @@ const STATUS_TEXT: Record<string, string> = {
   queued: 'en cola', sending: 'enviando…', sent: '✓', delivered: '✓✓', read: '✓✓ leído', failed: 'falló',
 }
 
+/** 507XXXXXXXX si es un celular de Panamá (como el backend). */
+function waPhone (raw: string | null | undefined): string | null {
+  let d = (raw ?? '').replace(/\D/g, '')
+  if (d.length === 11 && d.startsWith('507')) d = d.slice(3)
+  return d.length === 8 && d.startsWith('6') ? '507' + d : null
+}
+
 export function ConversationModal ({ pkg, onClose }: { pkg: Package, onClose: () => void }) {
+  const qc = useQueryClient()
+  const [text, setText] = useState('')
   const { data, isLoading, error } = useQuery({
     queryKey: ['wa-messages', pkg.id],
     queryFn: () => api.waMessages(pkg.id),
-    refetchInterval: 10_000,
+    refetchInterval: 5_000,
   })
+  const send = useMutation({
+    mutationFn: () => api.waSend(pkg.id, text.trim()),
+    onSuccess: () => { setText(''); qc.invalidateQueries({ queryKey: ['wa-messages', pkg.id] }) },
+  })
+  const phone = waPhone(pkg.customer_phone)
   return (
-    <Modal title={`Conversación · ${pkg.customer_name ?? pkg.tracking_number}`} onClose={onClose}>
-      <ErrorBox error={error} />
+    <Modal title={`Chat · ${pkg.customer_name ?? pkg.tracking_number}`} onClose={onClose}>
+      {phone && (
+        <a className='mb-2 inline-block text-sm text-green-700 hover:underline' href={`https://wa.me/${phone}`}
+          target='_blank' rel='noreferrer'>↗ Abrir en WhatsApp (para llamar)</a>
+      )}
+      <ErrorBox error={error || send.error} />
       {isLoading ? <Spinner /> : (
         <div className='space-y-2'>
           {data?.length === 0 && <p className='text-sm text-slate-500'>Sin mensajes todavía.</p>}
@@ -140,6 +158,17 @@ export function ConversationModal ({ pkg, onClose }: { pkg: Package, onClose: ()
             </div>
           ))}
         </div>
+      )}
+      {phone && (
+        <form className='mt-3 flex gap-2' onSubmit={e => { e.preventDefault(); if (text.trim()) send.mutate() }}>
+          <textarea className={`${input} min-h-[42px] flex-1`} rows={2} maxLength={2000} value={text}
+            placeholder='Escribe un mensaje (sale por la cuenta de WhatsApp de este cliente)'
+            onChange={e => setText(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (text.trim()) send.mutate() } }} />
+          <button className={btn.primary} disabled={send.isPending || !text.trim()}>
+            {send.isPending ? 'Enviando…' : 'Enviar'}
+          </button>
+        </form>
       )}
     </Modal>
   )

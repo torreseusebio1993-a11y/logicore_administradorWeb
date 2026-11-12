@@ -190,6 +190,8 @@ export interface UserSettings {
   wa_end_hour?: number
   wa_retry_hours?: number
   wa_auto_on_the_way: boolean   // aviso "vamos en camino" automático
+  wa_auto_access_notice: boolean   // aviso de garita automático (aparte)
+  wa_all_day: boolean           // disponible las 24 horas (sin horario)
   wa_auto_eta_reply: boolean    // responder "¿a qué hora llega?"
 }
 
