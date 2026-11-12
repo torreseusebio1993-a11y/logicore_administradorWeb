@@ -8,8 +8,9 @@ const nav = [
   { to: '/mapa', label: 'Mapa de clientes', icon: '🗺️' },
   { to: '/ruta', label: 'Ruta del día', icon: '🧭' },
   { to: '/whatsapp', label: 'WhatsApp', icon: '💬' },
-  { to: '/monitoreo', label: 'Monitoreo', icon: '📊' },
-  { to: '/app', label: 'App móvil', icon: '📲' },
+  { to: '/usuarios', label: 'Usuarios', icon: '👥', admin: true },
+  { to: '/monitoreo', label: 'Monitoreo', icon: '📊', admin: true },
+  { to: '/app', label: 'App móvil', icon: '📲', admin: true },
   { to: '/ajustes', label: 'Ajustes', icon: '⚙️' },
 ]
 
@@ -23,7 +24,7 @@ export default function Layout () {
           <div className='text-xs text-white/70'>Panel de administración</div>
         </div>
         <nav className='flex-1 space-y-1 px-3'>
-          {nav.map(n => (
+          {nav.filter(n => !n.admin || user?.role === 'admin').map(n => (
             <NavLink
               key={n.to}
               to={n.to}
@@ -37,7 +38,7 @@ export default function Layout () {
         </nav>
         <div className='border-t border-white/15 p-4 text-sm'>
           <div className='font-medium'>{user?.name}</div>
-          <div className='text-xs text-white/70'>@{user?.username}</div>
+          <div className='text-xs text-white/70'>@{user?.username} · {user?.role === 'admin' ? 'Administrador' : 'Repartidor'}</div>
           <button onClick={logout} className='mt-3 text-xs text-white/80 underline hover:text-white'>Cerrar sesión</button>
         </div>
       </aside>

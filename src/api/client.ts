@@ -1,7 +1,7 @@
 // Cliente de la API. El panel se autentica con la sesión del usuario
 // (Authorization: Bearer); NUNCA con la API key de la app móvil.
 import type {
-  AppRelease, Batch, BatchEdit, CustomerDetail, MonitorErrors, MonitorMetrics, MonitorStatus, CustomerSummary, Package, PackageEdit, StatsSummary, TodayRoute, User, UserSettings,
+  AppRelease, Batch, BatchEdit, CustomerDetail, ManagedUser, UserActivity, MonitorErrors, MonitorMetrics, MonitorStatus, CustomerSummary, Package, PackageEdit, StatsSummary, TodayRoute, User, UserSettings,
   WaAccount, WaMessage, WaTemplate,
 } from './types'
 
@@ -77,7 +77,7 @@ export const api = {
 
   // Cargas y paquetes
   stats: () => get<StatsSummary>('/batches/stats/summary'),
-  batches: () => get<Batch[]>('/batches/'),
+  batches: (userId?: number) => get<Batch[]>(`/batches/${userId ? `?user_id=${userId}` : ''}`),
   batch: (id: number) => get<Batch>(`/batches/${id}`),
   closeBatch: (id: number) => post<Batch>(`/batches/${id}/close`),
   updateBatch: (id: number, data: BatchEdit) => patch<Batch>(`/batches/${id}`, data),
@@ -107,8 +107,9 @@ export const api = {
   deleteLocation: (id: number, locId: number) => del(`/customers/${id}/locations/${locId}`),
 
   // Ruta del día (por calles con OSRM; si no, en línea recta)
-  todayRoute: (opts: { lat?: number, lng?: number, batchId?: number }) => {
+  todayRoute: (opts: { lat?: number, lng?: number, batchId?: number, driverId?: number }) => {
     const q = new URLSearchParams({ with_geometry: 'true' })
+    if (opts.driverId) q.set('driver_id', String(opts.driverId))
     if (opts.lat != null && opts.lng != null) { q.set('lat', String(opts.lat)); q.set('lng', String(opts.lng)) }
     if (opts.batchId) q.set('batch_id', String(opts.batchId))
     return get<TodayRoute>(`/routes/today?${q}`)
@@ -132,6 +133,15 @@ export const api = {
   waQueue: () => get<Record<string, number>>('/whatsapp/queue'),
   waTemplates: () => get<WaTemplate[]>('/whatsapp/templates'),
   waUpdateTemplate: (key: string, body: string) => put<WaTemplate>(`/whatsapp/templates/${key}`, { body }),
+
+  // Usuarios (solo administrador)
+  users: () => get<ManagedUser[]>('/users'),
+  createUser: (data: { username: string, name: string, password: string, role: 'admin' | 'driver' }) =>
+    post<ManagedUser>('/users', data),
+  updateUser: (id: number, data: { name?: string, role?: 'admin' | 'driver', is_active?: boolean }) =>
+    patch<ManagedUser>(`/users/${id}`, data),
+  setUserPassword: (id: number, password: string) => post<void>(`/users/${id}/password`, { password }),
+  userActivity: (id: number, days = 7) => get<UserActivity>(`/users/${id}/activity?days=${days}`),
 
   // Versiones de la app móvil
   appReleases: () => get<AppRelease[]>('/app/releases'),

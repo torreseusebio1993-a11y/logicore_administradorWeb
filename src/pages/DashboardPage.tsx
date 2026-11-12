@@ -15,7 +15,7 @@ function Stat ({ label, value, color = 'text-slate-900' }: { label: string, valu
 
 export default function DashboardPage () {
   const stats = useQuery({ queryKey: ['stats'], queryFn: api.stats, refetchInterval: 30_000 })
-  const batches = useQuery({ queryKey: ['batches'], queryFn: api.batches })
+  const batches = useQuery({ queryKey: ['batches'], queryFn: () => api.batches() })
   const accounts = useQuery({ queryKey: ['wa-accounts'], queryFn: api.waAccounts, refetchInterval: 15_000 })
   const queue = useQuery({ queryKey: ['wa-queue'], queryFn: api.waQueue, refetchInterval: 15_000 })
 

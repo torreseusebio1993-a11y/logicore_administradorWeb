@@ -173,6 +173,7 @@ export default function SettingsPage () {
               </Field>
             </div>
 
+            {user?.role === 'admin' && (<>
             <div className='pt-2'>
               <h2 className='font-semibold'>Alertas del monitoreo</h2>
               <p className='text-sm text-slate-500'>
@@ -193,6 +194,8 @@ export default function SettingsPage () {
                 Activadas
               </label>
             </div>
+
+            </>)}
 
             <div className='pt-2'>
               <h2 className='font-semibold'>Ruta</h2>

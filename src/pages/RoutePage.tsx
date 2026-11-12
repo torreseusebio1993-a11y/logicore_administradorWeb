@@ -3,6 +3,7 @@ import L from 'leaflet'
 import { useEffect, useMemo, useState } from 'react'
 import { MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from 'react-leaflet'
 import { api } from '../api/client'
+import { useAuth } from '../auth/AuthContext'
 import type { Package, RouteStop } from '../api/types'
 import { PageHeader } from '../components/Layout'
 import { Badge, btn, ErrorBox, input, localPhone, mapAddress, mapsUrl, Spinner } from '../components/ui'
@@ -69,16 +70,19 @@ function FitBounds ({ points }: { points: [number, number][] }) {
 }
 
 export default function RoutePage () {
-  const batches = useQuery({ queryKey: ['batches'], queryFn: api.batches })
+  const batches = useQuery({ queryKey: ['batches'], queryFn: () => api.batches() })
   const [batchId, setBatchId] = useState<number | undefined>()
+  const [driverId, setDriverId] = useState<number | undefined>()
+  const isAdmin = useAuth().user?.role === 'admin'
+  const drivers = useQuery({ queryKey: ['users'], queryFn: api.users, enabled: isAdmin })
   const [origin, setOrigin] = useState<{ lat: number, lng: number } | null>(null)
   const [geoError, setGeoError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const qc = useQueryClient()
 
   const route = useQuery({
-    queryKey: ['route', batchId, origin?.lat, origin?.lng],
-    queryFn: () => api.todayRoute({ ...origin, batchId }),
+    queryKey: ['route', batchId, driverId, origin?.lat, origin?.lng],
+    queryFn: () => api.todayRoute({ ...origin, batchId, driverId }),
     refetchInterval: 60_000,
   })
 
@@ -120,6 +124,12 @@ export default function RoutePage () {
         title='Ruta del día'
         subtitle='Sector por sector, en orden de cercanía (por calles reales cuando OSRM está activo)'
         actions={<>
+          {isAdmin && (
+            <select className={input} value={driverId ?? ''} onChange={e => setDriverId(e.target.value ? Number(e.target.value) : undefined)}>
+              <option value=''>Todos los repartidores</option>
+              {(drivers.data ?? []).filter(u => u.is_active).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+            </select>
+          )}
           <select className={input} value={batchId ?? ''} onChange={e => setBatchId(e.target.value ? Number(e.target.value) : undefined)}>
             <option value=''>Todas las cargas abiertas</option>
             {(batches.data ?? []).filter(b => b.status !== 'closed').map(b => <option key={b.id} value={b.id}>{b.name}</option>)}

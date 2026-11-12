@@ -33,7 +33,7 @@ export default function MapPage () {
   const [includeDelivered, setIncludeDelivered] = useState(false)
   const [sector, setSector] = useState('')
 
-  const batches = useQuery({ queryKey: ['batches'], queryFn: api.batches })
+  const batches = useQuery({ queryKey: ['batches'], queryFn: () => api.batches() })
   const pins = useQuery({
     queryKey: ['map', batchId, includeDelivered],
     queryFn: () => api.mapPackages(batchId, includeDelivered),

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import QRCode from 'qrcode'
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
+import { useAuth } from '../auth/AuthContext'
 import type { WaAccount } from '../api/types'
 import { PageHeader } from '../components/Layout'
 import { accountStatus, Badge, btn, ErrorBox, Field, input, localPhone, Modal, Spinner } from '../components/ui'
@@ -173,6 +174,7 @@ function TemplateModal ({ onClose }: { onClose: () => void }) {
 const clock = (m: number) => m >= 1440 ? '24:00' : `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`
 
 export default function WhatsAppPage () {
+  const isAdmin = useAuth().user?.role === 'admin'
   const qc = useQueryClient()
   const accounts = useQuery({ queryKey: ['wa-accounts'], queryFn: api.waAccounts, refetchInterval: 5000 })
   const service = useQuery({ queryKey: ['wa-service'], queryFn: api.waService, refetchInterval: 15_000 })
@@ -198,7 +200,7 @@ export default function WhatsAppPage () {
         title='WhatsApp'
         subtitle='Cuentas con las que se escribe a los clientes (puedes tener las que quieras)'
         actions={<>
-          <button className={btn.ghost} onClick={() => setTemplate(true)}>✏️ Editar mensajes</button>
+          {isAdmin && <button className={btn.ghost} onClick={() => setTemplate(true)}>✏️ Editar mensajes</button>}
           <button className={btn.wa} onClick={() => setCreating(true)}>+ Agregar cuenta</button>
         </>}
       />

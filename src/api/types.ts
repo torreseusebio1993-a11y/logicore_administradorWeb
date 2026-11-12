@@ -4,6 +4,7 @@ export interface User {
   id: number
   username: string
   name: string
+  role: 'admin' | 'driver'
 }
 
 export interface Batch {
@@ -19,6 +20,8 @@ export interface Batch {
   pending_packages: number
   progress: number
   status: 'open' | 'in_progress' | 'closed'
+  user_id: number | null         // repartidor dueño
+  owner_name: string | null
   loaded_at: string
   closed_at: string | null
 }
@@ -262,4 +265,21 @@ export interface AppRelease {
   id: number, version_name: string, version_code: number, notes: string | null
   mandatory: boolean, active: boolean, size_bytes: number, sha256: string
   downloads: number, created_at: string
+}
+
+// ── Usuarios (administración) ──────────────────────────
+export interface ManagedUser {
+  id: number, username: string, name: string, role: 'admin' | 'driver', is_active: boolean
+  created_at: string | null, last_login_at: string | null, deactivated_at: string | null
+  last_seen: string | null, app_version: string | null
+  open_batches: number, deliveries_7d: number, errors_24h: number, whatsapp_accounts: number
+}
+
+export interface UserActivity {
+  user: ManagedUser, days: number
+  per_day: { day: string, requests: number, errors: number }[]
+  top_actions: { path: string, method: string, count: number }[]
+  recent: { ts: string, method: string, path: string, status: number, ms: number, client: string | null }[]
+  events: { ts: string, level: string, source: string, kind: string, message: string, path: string | null }[]
+  delivered_total: number, pending_total: number
 }

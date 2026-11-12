@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { useAuth } from './auth/AuthContext'
 import Layout from './components/Layout'
 import { Spinner } from './components/ui'
@@ -12,7 +12,14 @@ import MapPage from './pages/MapPage'
 import MonitorPage from './pages/MonitorPage'
 import RoutePage from './pages/RoutePage'
 import SettingsPage from './pages/SettingsPage'
+import UsersPage from './pages/UsersPage'
 import WhatsAppPage from './pages/WhatsAppPage'
+
+/** Páginas solo del administrador (el backend también lo exige). */
+function AdminOnly () {
+  const { user } = useAuth()
+  return user?.role === 'admin' ? <Outlet /> : <Navigate to='/' replace />
+}
 
 function Protected () {
   const { user, checking } = useAuth()
@@ -34,8 +41,11 @@ export default function App () {
         <Route path='mapa' element={<MapPage />} />
         <Route path='ruta' element={<RoutePage />} />
         <Route path='whatsapp' element={<WhatsAppPage />} />
-        <Route path='monitoreo' element={<MonitorPage />} />
-        <Route path='app' element={<AppReleasesPage />} />
+        <Route element={<AdminOnly />}>
+          <Route path='monitoreo' element={<MonitorPage />} />
+          <Route path='app' element={<AppReleasesPage />} />
+          <Route path='usuarios' element={<UsersPage />} />
+        </Route>
         <Route path='ajustes' element={<SettingsPage />} />
       </Route>
       <Route path='*' element={<Navigate to='/' replace />} />

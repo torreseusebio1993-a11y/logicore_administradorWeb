@@ -1,15 +1,27 @@
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
+import { useAuth } from '../auth/AuthContext'
 import { PageHeader } from '../components/Layout'
-import { Badge, ErrorBox, formatDate, Spinner } from '../components/ui'
+import { Badge, ErrorBox, formatDate, input, Spinner } from '../components/ui'
 
 export default function BatchesPage () {
-  const { data, isLoading, error } = useQuery({ queryKey: ['batches'], queryFn: api.batches })
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'admin'
+  const [owner, setOwner] = useState<number | undefined>()
+  const { data, isLoading, error } = useQuery({ queryKey: ['batches', owner], queryFn: () => api.batches(owner) })
+  const users = useQuery({ queryKey: ['users'], queryFn: api.users, enabled: isAdmin })
 
   return (
     <>
-      <PageHeader title='Cargas' subtitle='La fecha más reciente primero' />
+      <PageHeader title='Cargas' subtitle={isAdmin ? 'Todas las cargas (filtra por repartidor)' : 'Tus cargas · la fecha más reciente primero'}
+        actions={isAdmin && (
+          <select className={input} value={owner ?? ''} onChange={e => setOwner(e.target.value ? Number(e.target.value) : undefined)}>
+            <option value=''>Todos los repartidores</option>
+            {(users.data ?? []).map(u => <option key={u.id} value={u.id}>{u.name}{u.is_active ? '' : ' (de baja)'}</option>)}
+          </select>
+        )} />
       <div className='p-8'>
         <ErrorBox error={error} />
         {isLoading ? <Spinner /> : (
@@ -20,6 +32,7 @@ export default function BatchesPage () {
                   <th className='px-4 py-3'>Fecha</th>
                   <th className='px-4 py-3'>Ruta</th>
                   <th className='px-4 py-3'>Código</th>
+                  {isAdmin && <th className='px-4 py-3'>Repartidor</th>}
                   <th className='px-4 py-3 text-right'>Cargados</th>
                   <th className='px-4 py-3 text-right'>Entregados</th>
                   <th className='px-4 py-3'>Progreso</th>
@@ -37,6 +50,7 @@ export default function BatchesPage () {
                         {b.notes && <div className='text-xs text-slate-500'>{b.notes}</div>}
                       </td>
                       <td className='px-4 py-3 text-xs text-slate-500'>{b.code}</td>
+                      {isAdmin && <td className='px-4 py-3'>{b.owner_name ?? '—'}</td>}
                       <td className='px-4 py-3 text-right'>{b.total_packages}/{b.expected_packages}</td>
                       <td className='px-4 py-3 text-right'>{b.delivered_packages}</td>
                       <td className='w-40 px-4 py-3'>
