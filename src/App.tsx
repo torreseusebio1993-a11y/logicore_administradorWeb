@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './auth/AuthContext'
 import Layout from './components/Layout'
 import { Spinner } from './components/ui'
+import AppReleasesPage from './pages/AppReleasesPage'
 import BatchDetailPage from './pages/BatchDetailPage'
 import BatchesPage from './pages/BatchesPage'
 import CustomersPage from './pages/CustomersPage'
@@ -34,6 +35,7 @@ export default function App () {
         <Route path='ruta' element={<RoutePage />} />
         <Route path='whatsapp' element={<WhatsAppPage />} />
         <Route path='monitoreo' element={<MonitorPage />} />
+        <Route path='app' element={<AppReleasesPage />} />
         <Route path='ajustes' element={<SettingsPage />} />
       </Route>
       <Route path='*' element={<Navigate to='/' replace />} />

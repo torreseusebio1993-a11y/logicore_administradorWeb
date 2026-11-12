@@ -9,6 +9,7 @@ const nav = [
   { to: '/ruta', label: 'Ruta del día', icon: '🧭' },
   { to: '/whatsapp', label: 'WhatsApp', icon: '💬' },
   { to: '/monitoreo', label: 'Monitoreo', icon: '📊' },
+  { to: '/app', label: 'App móvil', icon: '📲' },
   { to: '/ajustes', label: 'Ajustes', icon: '⚙️' },
 ]
 

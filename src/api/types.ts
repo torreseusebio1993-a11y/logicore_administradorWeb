@@ -256,3 +256,10 @@ export interface MonitorErrors {
   by_user: { user: string, count: number }[]
   by_source: { source: string, count: number }[]
 }
+
+// ── Versiones de la app móvil ──────────────────────────
+export interface AppRelease {
+  id: number, version_name: string, version_code: number, notes: string | null
+  mandatory: boolean, active: boolean, size_bytes: number, sha256: string
+  downloads: number, created_at: string
+}

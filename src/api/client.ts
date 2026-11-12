@@ -1,7 +1,7 @@
 // Cliente de la API. El panel se autentica con la sesión del usuario
 // (Authorization: Bearer); NUNCA con la API key de la app móvil.
 import type {
-  Batch, BatchEdit, CustomerDetail, MonitorErrors, MonitorMetrics, MonitorStatus, CustomerSummary, Package, PackageEdit, StatsSummary, TodayRoute, User, UserSettings,
+  AppRelease, Batch, BatchEdit, CustomerDetail, MonitorErrors, MonitorMetrics, MonitorStatus, CustomerSummary, Package, PackageEdit, StatsSummary, TodayRoute, User, UserSettings,
   WaAccount, WaMessage, WaTemplate,
 } from './types'
 
@@ -30,12 +30,13 @@ async function request<T> (method: string, path: string, body?: unknown): Promis
   const headers: Record<string, string> = { 'X-Client': 'panel' }
   const token = tokenStore.get()
   if (token) headers.Authorization = `Bearer ${token}`
-  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  const isForm = body instanceof FormData
+  if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json'
 
   let res: Response
   try {
     res = await fetch(BASE + path, {
-      method, headers, body: body === undefined ? undefined : JSON.stringify(body),
+      method, headers, body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
     })
   } catch {
     throw new ApiError(0, 'Sin conexión con el servidor')
@@ -59,6 +60,7 @@ async function request<T> (method: string, path: string, body?: unknown): Promis
 }
 
 const get = <T>(p: string) => request<T>('GET', p)
+const upload = <T>(p: string, form: FormData) => request<T>('POST', p, form)
 const post = <T>(p: string, b?: unknown) => request<T>('POST', p, b ?? {})
 const patch = <T>(p: string, b: unknown) => request<T>('PATCH', p, b)
 const put = <T>(p: string, b: unknown) => request<T>('PUT', p, b)
@@ -130,6 +132,21 @@ export const api = {
   waQueue: () => get<Record<string, number>>('/whatsapp/queue'),
   waTemplates: () => get<WaTemplate[]>('/whatsapp/templates'),
   waUpdateTemplate: (key: string, body: string) => put<WaTemplate>(`/whatsapp/templates/${key}`, { body }),
+
+  // Versiones de la app móvil
+  appReleases: () => get<AppRelease[]>('/app/releases'),
+  uploadAppRelease: (file: File, data: { version_name: string, version_code: number, notes: string, mandatory: boolean }) => {
+    const form = new FormData()
+    form.append('file', file)
+    form.append('version_name', data.version_name)
+    form.append('version_code', String(data.version_code))
+    form.append('notes', data.notes)
+    form.append('mandatory', String(data.mandatory))
+    return upload<AppRelease>('/app/releases', form)
+  },
+  updateAppRelease: (id: number, data: { mandatory?: boolean, active?: boolean, notes?: string }) =>
+    patch<AppRelease>(`/app/releases/${id}`, data),
+  deleteAppRelease: (id: number) => del(`/app/releases/${id}`),
 
   // Monitoreo
   monitorStatus: () => get<MonitorStatus>('/monitor/status'),
