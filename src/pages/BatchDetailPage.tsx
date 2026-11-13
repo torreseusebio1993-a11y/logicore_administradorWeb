@@ -54,6 +54,30 @@ export default function BatchDetailPage () {
     },
   })
 
+  // Aviso "hoy entregamos": primero vista previa (a cuántos y el texto)
+  const todayNotice = useMutation({
+    mutationFn: async () => {
+      const pre = await api.noticePreview('delivery_today', id)
+      if (pre.clients === 0) {
+        setNotice('No hay clientes a quién avisar')
+        return
+      }
+      const omitted = pre.skipped.map(s => `${s.count} ${s.reason.toLowerCase()}`).join(' · ')
+      const ok = confirm(
+        `¿Avisar a ${pre.clients} clientes (${pre.packages} paquetes pendientes)?\n` +
+        'Un solo mensaje por cliente; los ya entregados no reciben nada.' +
+        (omitted ? `\nOmitidos: ${omitted}` : '') +
+        `\n\nMensaje:\n${pre.template}`)
+      if (!ok) return
+      const r = await api.sendNotice('delivery_today', id)
+      setNotice(`${r.queued} avisos en cola`)
+    },
+  })
+  const cancel = useMutation({
+    mutationFn: () => api.cancelQueue(id),
+    onSuccess: r => { setNotice(r.cancelled ? `${r.cancelled} mensajes cancelados` : 'No había mensajes en cola'); refresh() },
+  })
+
   const rows = useMemo(() => {
     const test = FILTERS.find(f => f[0] === filter)![2]
     const q = search.trim().toLowerCase()
@@ -90,10 +114,17 @@ export default function BatchDetailPage () {
           >
             💬 Pedir ubicación a todos
           </button>
+          <button className={btn.wa} disabled={todayNotice.isPending} onClick={() => todayNotice.mutate()}>
+            📣 Avisar: hoy entregamos
+          </button>
+          <button className={btn.ghost} disabled={cancel.isPending}
+            onClick={() => confirm('¿Cancelar los mensajes de esta carga que todavía están en cola? Lo ya enviado no se puede deshacer.') && cancel.mutate()}>
+            ⛔ Cancelar cola
+          </button>
         </>}
       />
       <div className='space-y-4 p-8'>
-        <ErrorBox error={packages.error || remove.error || askOne.error || askAll.error} />
+        <ErrorBox error={packages.error || remove.error || askOne.error || askAll.error || todayNotice.error || cancel.error} />
         {notice && (
           <div className='flex justify-between rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800'>
             {notice}<button onClick={() => setNotice(null)}>×</button>

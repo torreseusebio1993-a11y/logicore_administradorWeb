@@ -131,6 +131,12 @@ export const api = {
   waRequestLocationBatch: (batchId: number) =>
     post<{ queued: number, skipped: { package_id: number, tracking: string | null, reason: string }[] }>(
       `/whatsapp/batches/${batchId}/request-location`),
+  noticePreview: (key: string, batchId: number) =>
+    get<{ clients: number, packages: number, skipped: { reason: string, count: number }[], template: string }>(
+      `/whatsapp/notices/${key}/preview?batch_id=${batchId}`),
+  sendNotice: (key: string, batchId: number) =>
+    post<{ queued: number }>(`/whatsapp/notices/${key}?batch_id=${batchId}`),
+  cancelQueue: (batchId: number) => post<{ cancelled: number }>(`/whatsapp/queue/cancel?batch_id=${batchId}`),
   waMessages: (packageId: number) => get<WaMessage[]>(`/whatsapp/packages/${packageId}/messages`),
   waSend: (packageId: number, body: string) =>
     post<WaMessage>(`/whatsapp/packages/${packageId}/messages`, { body }),
