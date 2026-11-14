@@ -335,7 +335,7 @@ function WhatsApp ({ s, m }: { s: MonitorStatus, m: MonitorMetrics }) {
             {s.whatsapp.accounts.map(a => (
               <tr key={a.id}>
                 <td className='py-2'>{a.name}{!a.enabled && ' (pausada)'}</td>
-                <td>{a.status === 'connected' ? '✅ Conectada' : a.status === 'logged_out' ? '⛔ Sesión cerrada' : `⚠️ ${a.status}`}</td>
+                <td>{a.status === 'connected' ? '✅ Conectada' : a.status === 'logged_out' ? '⛔ Sesión cerrada' : a.status === 'banned' ? '🚫 Bloqueada por WhatsApp' : `⚠️ ${a.status}`}</td>
                 <td>{a.clients_today} clientes · {a.sent_today} mensajes</td>
                 <td className='text-xs'>{a.last_sent_at ? formatDate(a.last_sent_at, true) : '—'}</td>
               </tr>

@@ -104,6 +104,20 @@ export default function SettingsPage () {
               <input className={input} type='number' min={1} max={1000} value={form.wa_daily_limit}
                 onChange={e => set('wa_daily_limit', Number(e.target.value))} required />
             </Field>
+            <label className='flex items-start gap-3 text-sm'>
+              <input type='checkbox' className='mt-1' checked={form.wa_account_mode === 'balance'}
+                onChange={e => set('wa_account_mode', e.target.checked ? 'balance' : 'fill')} />
+              <span>
+                <b>Repartir clientes entre cuentas</b>
+                <span className='block text-slate-500'>Apagado (recomendado): en orden, primero la Cuenta 1 hasta su límite, luego la Cuenta 2. Encendido: cada cliente nuevo va a la cuenta con menos clientes hoy.</span>
+              </span>
+            </label>
+            <Field label='Intentos antes de devolver un paquete'
+              hint='Ausente, no localizado…: sale de la ruta de hoy y vuelve mañana, hasta llegar a este número'>
+              <select className={input} value={form.max_attempts} onChange={e => set('max_attempts', Number(e.target.value))}>
+                {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </Field>
 
             <div className='pt-2'>
               <h2 className='font-semibold'>Reintento para pedir ubicación</h2>

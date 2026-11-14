@@ -71,9 +71,10 @@ export type PackageEdit = Partial<Pick<Package,
 
 export interface WaAccount {
   id: number
+  number: number | null       // "Cuenta 1", "Cuenta 2"... (por dueño)
   name: string
   phone: string
-  status: 'pending' | 'connecting' | 'connected' | 'disconnected' | 'logged_out'
+  status: 'pending' | 'connecting' | 'connected' | 'disconnected' | 'logged_out' | 'banned'
   status_detail: string | null
   enabled: boolean
   daily_limit: number
@@ -112,6 +113,7 @@ export interface WaTemplate {
   key: string
   title: string
   body: string
+  custom: boolean             // true = el usuario la personalizó (solo para él)
 }
 
 export interface StatsSummary {
@@ -196,6 +198,8 @@ export interface UserSettings {
   wa_auto_on_the_way: boolean   // aviso "vamos en camino" automático
   wa_auto_access_notice: boolean   // aviso de garita automático (aparte)
   wa_all_day: boolean           // disponible las 24 horas (sin horario)
+  wa_account_mode: 'fill' | 'balance'   // fill = Cuenta 1 hasta su límite, luego la 2
+  max_attempts: number          // intentos antes de "devuelto"
   wa_auto_eta_reply: boolean    // responder "¿a qué hora llega?"
 }
 

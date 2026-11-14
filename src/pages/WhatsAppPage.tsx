@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import QRCode from 'qrcode'
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
-import { useAuth } from '../auth/AuthContext'
 import type { WaAccount } from '../api/types'
 import { PageHeader } from '../components/Layout'
 import { accountStatus, Badge, btn, ErrorBox, Field, input, localPhone, Modal, Spinner } from '../components/ui'
@@ -119,6 +118,13 @@ function TemplateModal ({ onClose }: { onClose: () => void }) {
       onClose()
     },
   })
+  const reset = useMutation({
+    mutationFn: (k: string) => api.waResetTemplate(k),
+    onSuccess: (_, k) => {
+      setEdits(v => { const n = { ...v }; delete n[k]; return n })
+      qc.invalidateQueries({ queryKey: ['wa-templates'] })
+    },
+  })
   const text = edits[key] ?? tpl?.body ?? ''
   const preview = text
     .replaceAll('{nombre}', 'Leticia Oses')
@@ -126,17 +132,17 @@ function TemplateModal ({ onClose }: { onClose: () => void }) {
     .replaceAll('{tracking_corto}', '35987')
 
   return (
-    <Modal title='Mensajes de WhatsApp' onClose={onClose} wide>
+    <Modal title='Mis plantillas (solo cambian para ti)' onClose={onClose} wide>
       {!templates.data ? <Spinner /> : (
         <div className='space-y-4'>
-          <div className='flex gap-2'>
+          <div className='flex flex-wrap gap-2'>
             {templates.data.map(t => (
               <button
                 key={t.key}
                 onClick={() => setKey(t.key)}
                 className={`rounded-full border px-3 py-1 text-sm ${key === t.key ? 'border-brand bg-brand/10 font-medium text-brand' : 'border-slate-300'}`}
               >
-                {t.title}{edits[t.key] !== undefined ? ' •' : ''}
+                {t.title}{t.custom ? ' ✓' : ''}{edits[t.key] !== undefined ? ' •' : ''}
               </button>
             ))}
           </div>
@@ -152,6 +158,12 @@ function TemplateModal ({ onClose }: { onClose: () => void }) {
           </div>
           <ErrorBox error={save.error} />
           <div className='flex justify-end gap-2'>
+            {tpl?.custom && (
+              <button className={btn.ghost} disabled={reset.isPending}
+                onClick={() => confirm('¿Volver al texto original de esta plantilla?') && reset.mutate(key)}>
+                ↺ Restaurar original
+              </button>
+            )}
             <button className={btn.ghost} onClick={onClose}>Cancelar</button>
             <button
               className={btn.primary}
@@ -174,7 +186,6 @@ function TemplateModal ({ onClose }: { onClose: () => void }) {
 const clock = (m: number) => m >= 1440 ? '24:00' : `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`
 
 export default function WhatsAppPage () {
-  const isAdmin = useAuth().user?.role === 'admin'
   const qc = useQueryClient()
   const accounts = useQuery({ queryKey: ['wa-accounts'], queryFn: api.waAccounts, refetchInterval: 5000 })
   const service = useQuery({ queryKey: ['wa-service'], queryFn: api.waService, refetchInterval: 15_000 })
@@ -200,7 +211,7 @@ export default function WhatsAppPage () {
         title='WhatsApp'
         subtitle='Cuentas con las que se escribe a los clientes (puedes tener las que quieras)'
         actions={<>
-          {isAdmin && <button className={btn.ghost} onClick={() => setTemplate(true)}>✏️ Editar mensajes</button>}
+          <button className={btn.ghost} onClick={() => setTemplate(true)}>✏️ Mis plantillas</button>
           <button className={btn.wa} onClick={() => setCreating(true)}>+ Agregar cuenta</button>
         </>}
       />
@@ -228,7 +239,7 @@ export default function WhatsAppPage () {
                 <div key={a.id} className='space-y-3 rounded-2xl border border-slate-200 bg-white p-5'>
                   <div className='flex items-start justify-between'>
                     <div>
-                      <div className='font-semibold'>{a.name}</div>
+                      <div className='font-semibold'>{a.number != null && <span className='mr-1 rounded bg-slate-800 px-1.5 text-xs text-white'>Cuenta {a.number}</span>}{a.name}</div>
                       <div className='text-sm text-slate-500'>{localPhone(a.phone)}</div>
                     </div>
                     <Badge color={color}>{label}</Badge>

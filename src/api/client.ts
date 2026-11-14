@@ -146,6 +146,7 @@ export const api = {
   waQueue: () => get<Record<string, number>>('/whatsapp/queue'),
   waTemplates: () => get<WaTemplate[]>('/whatsapp/templates'),
   waUpdateTemplate: (key: string, body: string) => put<WaTemplate>(`/whatsapp/templates/${key}`, { body }),
+  waResetTemplate: (key: string) => request<WaTemplate>('DELETE', `/whatsapp/templates/${key}`),
 
   // Usuarios (solo administrador)
   users: () => get<ManagedUser[]>('/users'),

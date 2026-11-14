@@ -92,6 +92,7 @@ export function accountStatus (a: WaAccount): [string, string] {
     connecting: ['Vinculando…', 'bg-amber-100 text-amber-800'],
     disconnected: ['Desconectada', 'bg-red-100 text-red-700'],
     logged_out: ['Sesión cerrada', 'bg-red-100 text-red-700'],
+    banned: ['Bloqueada por WhatsApp', 'bg-red-600 text-white'],
     pending: ['Sin vincular', 'bg-slate-100 text-slate-600'],
   } as const)[a.status] as [string, string]
 }
