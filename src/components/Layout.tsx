@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import KorwayLogo from './KorwayLogo'
 
 const nav = [
   { to: '/', label: 'Inicio', icon: '🏠', end: true },
@@ -19,9 +20,12 @@ export default function Layout () {
   return (
     <div className='flex h-full'>
       <aside className='flex w-60 shrink-0 flex-col bg-gradient-to-b from-brand to-brand-dark text-white'>
-        <div className='px-5 py-6'>
-          <div className='text-xl font-bold tracking-tight'>LogiCore</div>
-          <div className='text-xs text-white/70'>Panel de administración</div>
+        <div className='flex items-center gap-3 px-5 py-6'>
+          <KorwayLogo size={38} />
+          <div>
+            <div className='text-xl font-extrabold tracking-tight'>Korway</div>
+            <div className='text-xs text-white/70'>Panel de administración</div>
+          </div>
         </div>
         <nav className='flex-1 space-y-1 px-3'>
           {nav.filter(n => !n.admin || user?.role === 'admin').map(n => (

@@ -117,7 +117,7 @@ export default function AppReleasesPage () {
         <section className='h-fit rounded-2xl border border-slate-200 bg-white p-5'>
           <h2 className='mb-1 font-semibold'>Publicar versión nueva</h2>
           <p className='mb-4 text-xs text-slate-500'>
-            El APK debe estar firmado con la llave de producción de LogiCore; si no, Android no lo acepta como actualización.
+            El APK debe estar firmado con la llave de producción de Korway; si no, Android no lo acepta como actualización.
           </p>
           <form className='space-y-3' onSubmit={e => { e.preventDefault(); upload.mutate() }}>
             <Field label='Archivo APK' hint='Ej. logicore-0.4.0+4.apk (la versión se toma del nombre)'>

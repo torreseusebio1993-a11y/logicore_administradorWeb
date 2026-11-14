@@ -2,8 +2,14 @@
 @import "leaflet/dist/leaflet.css";
 
 @theme {
-  --color-brand: #2563eb;
-  --color-brand-dark: #1e40af;
+  /* Korway: Elite Blue, Volt Lime y gris azulado */
+  --color-elite: #0251b0;
+  --color-elite-dark: #013a80;
+  --color-volt: #d1ff42;
+  --color-mist: #c7d1dd;
+  --color-mist-light: #f1f4f8;
+  --color-brand: #0251b0;
+  --color-brand-dark: #013a80;
   --color-wa: #25d366;
 }
 
