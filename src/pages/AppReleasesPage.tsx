@@ -21,11 +21,16 @@ export default function AppReleasesPage () {
   const [code, setCode] = useState('')
   const [notes, setNotes] = useState('')
   const [mandatory, setMandatory] = useState(false)
+  const [progress, setProgress] = useState<number | null>(null)
 
   const refresh = () => qc.invalidateQueries({ queryKey: ['app-releases'] })
   const upload = useMutation({
-    mutationFn: () => api.uploadAppRelease(file!, { version_name: version, version_code: Number(code), notes, mandatory }),
+    mutationFn: () => {
+      setProgress(0)
+      return api.uploadAppRelease(file!, { version_name: version, version_code: Number(code), notes, mandatory }, setProgress)
+    },
     onSuccess: () => { setFile(null); setVersion(''); setCode(''); setNotes(''); setMandatory(false); refresh() },
+    onSettled: () => setProgress(null),
   })
   const edit = useMutation({
     mutationFn: ({ id, ...data }: { id: number, mandatory?: boolean, active?: boolean }) => api.updateAppRelease(id, data),
@@ -134,6 +139,17 @@ export default function AppReleasesPage () {
               <input type='checkbox' className='mt-1' checked={mandatory} onChange={e => setMandatory(e.target.checked)} />
               <span><b>Obligatoria</b><span className='block text-xs text-slate-500'>Quien no actualice no podrá seguir usando la app.</span></span>
             </label>
+            {progress !== null && (
+              <div>
+                <div className='mb-1 flex justify-between text-xs text-slate-500'>
+                  <span>{progress < 1 ? 'Subiendo por partes…' : 'Revisando y publicando…'}</span>
+                  <span>{Math.round(progress * 100)}%</span>
+                </div>
+                <div className='h-2 rounded bg-slate-100'>
+                  <div className='h-2 rounded bg-brand transition-all' style={{ width: `${progress * 100}%` }} />
+                </div>
+              </div>
+            )}
             <ErrorBox error={upload.error} />
             <button className={btn.primary} disabled={upload.isPending || !file}>
               {upload.isPending ? 'Subiendo…' : 'Publicar'}
