@@ -168,10 +168,23 @@ export interface CustomerLocation {
   last_confirmed_at: string | null
 }
 
+export interface CustomerHistoryItem {
+  id: number, batch_id: number, tracking_number: string | null, status: Package['status']
+  address: string | null, created_at: string, delivered_at: string | null
+  driver: string | null          // repartidor que lo tenía
+}
+
 export interface CustomerDetail extends CustomerSummary {
   notes: string | null
   locations: CustomerLocation[]
-  history: Package[]
+  history: CustomerHistoryItem[]
+}
+
+/** Registro del directorio de clientes (solo administrador). */
+export interface CustomerAuditItem {
+  id: number, ts: string, user: string | null
+  action: 'search' | 'view' | 'edit' | 'add_phone' | 'add_location' | 'primary_location' | 'delete_location'
+  customer_id: number | null, customer: string | null, details: Record<string, unknown> | null
 }
 
 // Tiempos en minutos (la pausa entre mensajes, en segundos)

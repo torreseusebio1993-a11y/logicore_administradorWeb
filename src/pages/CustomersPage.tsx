@@ -3,10 +3,11 @@ import { useEffect, useState } from 'react'
 import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from 'react-leaflet'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api/client'
+import { useAuth } from '../auth/AuthContext'
 import type { CustomerDetail } from '../api/types'
 import { PageHeader } from '../components/Layout'
 import {
-  Badge, btn, ErrorBox, Field, formatDate, input, localPhone, locationStatus, mapsUrl,
+  Badge, btn, ErrorBox, Field, formatDate, input, localPhone, mapsUrl,
   packageStatus, Spinner,
 } from '../components/ui'
 
@@ -25,6 +26,7 @@ function Fit ({ points }: { points: [number, number][] }) {
 
 function CustomerProfile ({ id }: { id: number }) {
   const qc = useQueryClient()
+  const isAdmin = useAuth().user?.role === 'admin'
   const { data: c, isLoading, error } = useQuery({ queryKey: ['customer', id], queryFn: () => api.customer(id) })
   const [name, setName] = useState<string | null>(null)
   const [notes, setNotes] = useState<string | null>(null)
@@ -126,14 +128,50 @@ function CustomerProfile ({ id }: { id: number }) {
                 <td className='px-5 py-2 font-mono text-xs'>{p.tracking_number}</td>
                 <td className='px-5 py-2 text-xs text-slate-500'>{formatDate(p.created_at)}</td>
                 <td className='px-5 py-2'><Badge color={packageStatus[p.status][1]}>{packageStatus[p.status][0]}</Badge></td>
-                <td className='px-5 py-2'><Badge color={locationStatus[p.location_status][1]}>{locationStatus[p.location_status][0]}</Badge></td>
+                <td className='px-5 py-2 text-xs text-slate-500'>{p.driver ?? '—'}</td>
                 <td className='px-5 py-2 text-right'><Link className={btn.link} to={`/cargas/${p.batch_id}`}>Ver carga</Link></td>
               </tr>
             ))}
           </tbody>
         </table>
       </section>
+
+      {isAdmin && <AuditLog id={id} />}
     </div>
+  )
+}
+
+const ACTION: Record<string, string> = {
+  search: '🔎 Buscó', view: '👁 Vio la ficha', edit: '✏️ Cambió datos', add_phone: '📱 Agregó celular',
+  add_location: '📍 Agregó ubicación', primary_location: '⭐ Cambió la principal',
+  delete_location: '🗑 Borró ubicación',
+}
+
+/** Quién vio o cambió este cliente (el directorio es compartido). */
+function AuditLog ({ id }: { id: number }) {
+  const { data, isLoading } = useQuery({ queryKey: ['customer-audit', id], queryFn: () => api.customerAudit(id) })
+  return (
+    <section className='overflow-hidden rounded-2xl border border-slate-200 bg-white'>
+      <h2 className='border-b border-slate-100 px-5 py-3 font-semibold'>Registro: quién vio o cambió este cliente</h2>
+      {isLoading ? <Spinner /> : (data ?? []).length === 0
+        ? <p className='p-5 text-sm text-slate-500'>Sin actividad registrada.</p>
+        : (
+          <table className='w-full text-sm'>
+            <tbody className='divide-y divide-slate-100'>
+              {(data ?? []).map(a => (
+                <tr key={a.id} className='align-top'>
+                  <td className='whitespace-nowrap px-5 py-2 text-xs text-slate-500'>{formatDate(a.ts, true)}</td>
+                  <td className='px-5 py-2'>{a.user ?? '—'}</td>
+                  <td className='px-5 py-2'>{ACTION[a.action] ?? a.action}</td>
+                  <td className='px-5 py-2 text-xs text-slate-500'>
+                    {a.details ? Object.entries(a.details).map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}`).join(' · ') : ''}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+    </section>
   )
 }
 

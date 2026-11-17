@@ -4,6 +4,7 @@ import type {
   AppRelease, Batch, BatchEdit, CustomerDetail, ManagedUser, UserActivity, MonitorErrors, MonitorMetrics, MonitorStatus, CustomerSummary, Package, PackageEdit, StatsSummary, TodayRoute, User, UserSettings,
   WaAccount, WaMessage, WaTemplate,
   RouteFeedbackItem,
+  CustomerAuditItem,
 } from './types'
 
 const BASE = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/$/, '')
@@ -158,6 +159,9 @@ export const api = {
   // Clientes
   customers: (search = '') => get<CustomerSummary[]>(`/customers/${search ? `?search=${encodeURIComponent(search)}` : ''}`),
   customer: (id: number) => get<CustomerDetail>(`/customers/${id}`),
+  customerAudit: (id: number) => get<CustomerAuditItem[]>(`/customers/${id}/audit`),
+  customersAuditRecent: (days = 7, action?: string) =>
+    get<CustomerAuditItem[]>(`/customers/audit/recent?days=${days}${action ? `&action=${action}` : ''}`),
   updateCustomer: (id: number, data: { name?: string | null, notes?: string | null }) =>
     patch<CustomerDetail>(`/customers/${id}`, data),
   addCustomerPhone: (id: number, phone: string) => post<CustomerDetail>(`/customers/${id}/phones`, { phone }),
