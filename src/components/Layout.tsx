@@ -11,6 +11,7 @@ const nav = [
   { to: '/whatsapp', label: 'WhatsApp', icon: '💬' },
   { to: '/usuarios', label: 'Usuarios', icon: '👥', admin: true },
   { to: '/monitoreo', label: 'Monitoreo', icon: '📊', admin: true },
+  { to: '/fallas-ruta', label: 'Fallas de ruta', icon: '🧭', admin: true },
   { to: '/app', label: 'App móvil', icon: '📲', admin: true },
   { to: '/ajustes', label: 'Ajustes', icon: '⚙️' },
 ]

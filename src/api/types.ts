@@ -293,3 +293,18 @@ export interface UserActivity {
   events: { ts: string, level: string, source: string, kind: string, message: string, path: string | null }[]
   delivered_total: number, pending_total: number
 }
+
+// ── Fallas de ruta ─────────────────────────────────────
+export interface RouteFeedbackPkg {
+  id: number, tracking: string | null, address: string, geo_barriada: string | null
+  sector: string | null, lat: number | null, lng: number | null
+}
+
+export interface RouteFeedbackItem {
+  id: number, ts: string, user: string | null
+  kind: 'far' | 'sector' | 'other' | 'pinned' | 'skipped'
+  comment: string | null, latitude: number | null, longitude: number | null
+  suggested_km: number | null, chosen_km: number | null, nearest_km: number | null
+  details: { suggested: RouteFeedbackPkg | null, chosen: RouteFeedbackPkg | null,
+    nearest: RouteFeedbackPkg | null } | null
+}

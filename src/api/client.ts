@@ -3,6 +3,7 @@
 import type {
   AppRelease, Batch, BatchEdit, CustomerDetail, ManagedUser, UserActivity, MonitorErrors, MonitorMetrics, MonitorStatus, CustomerSummary, Package, PackageEdit, StatsSummary, TodayRoute, User, UserSettings,
   WaAccount, WaMessage, WaTemplate,
+  RouteFeedbackItem,
 } from './types'
 
 const BASE = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/$/, '')
@@ -224,6 +225,7 @@ export const api = {
 
   // Monitoreo
   monitorStatus: () => get<MonitorStatus>('/monitor/status'),
+  routeFeedback: (days: number) => get<RouteFeedbackItem[]>(`/monitor/route-feedback?days=${days}`),
   monitorMetrics: (days: number) => get<MonitorMetrics>(`/monitor/metrics?days=${days}`),
   monitorErrors: (hours: number, source?: string) =>
     get<MonitorErrors>(`/monitor/errors?hours=${hours}${source ? `&source=${source}` : ''}`),

@@ -13,6 +13,7 @@ import MonitorPage from './pages/MonitorPage'
 import RoutePage from './pages/RoutePage'
 import SettingsPage from './pages/SettingsPage'
 import UsersPage from './pages/UsersPage'
+import RouteFeedbackPage from './pages/RouteFeedbackPage'
 import WhatsAppPage from './pages/WhatsAppPage'
 
 /** Páginas solo del administrador (el backend también lo exige). */
@@ -43,6 +44,7 @@ export default function App () {
         <Route path='whatsapp' element={<WhatsAppPage />} />
         <Route element={<AdminOnly />}>
           <Route path='monitoreo' element={<MonitorPage />} />
+          <Route path='fallas-ruta' element={<RouteFeedbackPage />} />
           <Route path='app' element={<AppReleasesPage />} />
           <Route path='usuarios' element={<UsersPage />} />
         </Route>
